@@ -100,6 +100,8 @@ if __name__ == '__main__':
     split(os.path.join(data_dir, 'train.txt'), train_dir)
     split(os.path.join(data_dir, 'dev.txt'), dev_dir)
 
+    
+
     # get vocabulary
     build_vocab(
         glob.glob(os.path.join(data_dir, '*/*.toks')),
@@ -112,3 +114,4 @@ if __name__ == '__main__':
 
     glove_path = os.path.join('/Users/peng/Develops/NLP-Tools', 'glove.840B.300d.txt')
     build_word2Vector(glove_path, data_dir, 'vocab-cased.txt')
+   
