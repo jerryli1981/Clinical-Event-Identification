@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.abspath('../Lasagne'))
 from lasagne.layers import InputLayer, LSTMLayer, NonlinearityLayer, SliceLayer, FlattenLayer, EmbeddingLayer,\
     ElemwiseMergeLayer, ReshapeLayer, get_output, get_all_params, get_output_shape, DropoutLayer,\
     DenseLayer,ElemwiseSumLayer,Conv2DLayer, Conv1DLayer, CustomRecurrentLayer, AbsSubLayer,\
-    ConcatLayer, Pool1DLayer, FeaturePoolLayer,count_params,MaxPool2DLayer,MaxPool1DLayer
+    ConcatLayer, Pool1DLayer, FeaturePoolLayer,count_params,MaxPool2DLayer,MaxPool1DLayer,DimshuffleLayer
 
 from lasagne.regularization import regularize_layer_params_weighted, l2, l1,regularize_layer_params,\
                                     regularize_network_params
@@ -25,9 +25,9 @@ from lasagne.init import GlorotUniform
 
 from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap
 
-def build_network_2dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
+def build_network_1dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
 
-    print("Building model with 2D Convolution")
+    print("Building model with 1D Convolution")
 
     vocab_size = wordEmbeddings.shape[1]
     wordDim = wordEmbeddings.shape[0]
@@ -36,23 +36,35 @@ def build_network_2dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
     stride = 1 
 
     #CNN_sentence config
-    filter_size=(3, wordDim)
-    pool_size=(maxlen-3+1,1)
+    filter_size=2
+    pool_size=maxlen-filter_size+1
 
     input = InputLayer((None, maxlen),input_var=input_var)
     batchsize, seqlen = input.input_var.shape
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     emb.params[emb.W].remove('trainable') #(batchsize, maxlen, wordDim)
 
-    reshape = ReshapeLayer(emb, (batchsize, 1, maxlen, wordDim))
+    print get_output_shape(emb)
 
-    conv2d = Conv2DLayer(reshape, num_filters=num_filters, filter_size=(filter_size), stride=stride, 
-        nonlinearity=rectify,W=GlorotUniform()) #(None, 100, 34, 1)
-    maxpool = MaxPool2DLayer(conv2d, pool_size=pool_size) #(None, 100, 1, 1) 
+    reshape = DimshuffleLayer(emb, (0, 2, 1))
+
+    print get_output_shape(reshape)
+    #reshape = ReshapeLayer(emb, (batchsize, wordDim, maxlen))
+
+    conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=filter_size, stride=stride, 
+        nonlinearity=tanh,W=GlorotUniform()) #(None, 100, 34, 1)
+
+    #print get_output_shape(conv1d)
+
+    maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) #(None, 100, 1, 1) 
+
+    #print get_output_shape(maxpool)
   
-    forward = FlattenLayer(maxpool) #(None, 100) #(None, 50400)
+    #forward = FlattenLayer(maxpool) #(None, 100) #(None, 50400)
+
+    #print get_output_shape(forward)
  
-    hid = DenseLayer(forward, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    hid = DenseLayer(maxpool, num_units=args.hiddenDim, nonlinearity=sigmoid)
 
     network = DenseLayer(hid, num_units=2, nonlinearity=softmax)
 
@@ -61,7 +73,7 @@ def build_network_2dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
     loss = T.mean(binary_crossentropy(prediction,target_var))
     lambda_val = 0.5 * 1e-4
 
-    layers = {conv2d:lambda_val, hid:lambda_val, network:lambda_val} 
+    layers = {conv1d:lambda_val, hid:lambda_val, network:lambda_val} 
     penalty = regularize_layer_params_weighted(layers, l2)
     loss = loss + penalty
 
@@ -125,7 +137,7 @@ if __name__ == '__main__':
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
 
-    train_fn, val_fn = build_network_2dconv(args, input_var, target_var, wordEmbeddings)
+    train_fn, val_fn = build_network_1dconv(args, input_var, target_var, wordEmbeddings)
 
     print("Starting training...")
     best_val_acc = 0
