@@ -140,8 +140,10 @@ if __name__ == '__main__':
     # Load the dataset
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
+    
     model_dir = os.path.join(base_dir, 'models')
-    prediction_dir = os.path.join(base_dir, 'predictions')
+    if not os.path.exists(model_dir):
+            os.makedirs(model_dir)
 
     fileIdx = 1
 
@@ -149,9 +151,6 @@ if __name__ == '__main__':
 
         model_save_path = os.path.join(model_dir,
              'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx))
-
-        prediction_save_path = os.path.join(prediction_dir,
-             'prediction-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx-1))
 
         model_save_pre_path = os.path.join(model_dir,
              'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx-1))
@@ -279,3 +278,4 @@ if __name__ == '__main__':
                     f.write("</data>")
 
         os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
+

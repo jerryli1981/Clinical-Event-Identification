@@ -6,7 +6,7 @@ set -x
 ###################
 
 # training params
-epochs=3
+epochs=20
 step=0.01
 hiddenDim=50
 minibatch=100
