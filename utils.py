@@ -33,19 +33,12 @@ def feature_extraction(content, window_size):
         start_index = content.find(tok, start_index)
         if start_index == -1:
             raise "tok not in the original content"
-
-        end_index = start_index+len(tok)
   
-        spans.append((start_index,end_index))
+        spans.append((start_index,start_index+len(tok)))
 
-        feat = []
-        for j in reversed(range(window_size)):
-            feat.append(toks[i-j-1])
-
+        feat = [toks[i-j-1] for j in reversed(range(window_size))]
         feat.append(tok)
-
-        for j in range(window_size):
-            feat.append(toks[i+j+1])
+        feat = [toks[i+j+1] for j in range(window_size)]
 
         features.append(" ".join(feat))
 
