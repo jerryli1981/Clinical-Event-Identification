@@ -93,14 +93,14 @@ if __name__ == '__main__':
     data_dir = os.path.join(base_dir, 'data')
     train_dir = os.path.join(data_dir, 'train')
     dev_dir = os.path.join(data_dir, 'dev')
+    #test_dir = os.path.join(data_dir, 'test')
 
     make_dirs([train_dir, dev_dir])
 
     # split into separate files
     split(os.path.join(data_dir, 'train.txt'), train_dir)
     split(os.path.join(data_dir, 'dev.txt'), dev_dir)
-
-    
+    #split(os.path.join(data_dir, 'test.txt'), test_dir)
 
     # get vocabulary
     build_vocab(

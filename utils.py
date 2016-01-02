@@ -31,8 +31,6 @@ def read_sequence_dataset(dataset_dir, dataset_name, maxlen=5):
 
     X = np.zeros((data_size, maxlen), dtype=np.int16)
 
-    X_mask = np.zeros((data_size, maxlen), dtype=np.int16)
-
     from collections import defaultdict
     words = defaultdict(int)
 
@@ -63,13 +61,14 @@ def read_sequence_dataset(dataset_dir, dataset_name, maxlen=5):
             for j in range(maxlen):
                 if j < maxlen - len(toks_a):
                     X[i,j] = vocab["UNK"]
-                    X_mask[i, j] = 0
+        
                 else:
                     X[i, j] = vocab[toks_a[j-maxlen+len(toks_a)]]
-                    X_mask[i, j] = 1
-      
+                  
     Y_labels = np.zeros((len(labels), 2))
     for i in range(len(labels)):
         Y_labels[i, labels[i]] = 1.
 
-    return X, X_mask, Y_labels
+    return X, Y_labels
+
+

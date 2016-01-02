@@ -2,6 +2,7 @@ import os
 import re
 import nltk
 import anafora
+import numpy as np
 
 def clean(content):
     content = re.sub("\\[.*?\\]", "", content)
@@ -49,10 +50,12 @@ def run(input_ann_dir, input_text_dir, outfn):
                             mention = f.read(endoffset-startoffset)
                             content_l[startoffset-1:endoffset+1] = ['<']+list(mention)+['>']
 
-                    sequence = ie_preprocess(clean(''.join(content_l)))
+                    sequence = ie_preprocess(''.join(content_l))
                 
-                    sequence = re.sub("[,.;#*]", "", sequence)
-                    sequence = re.sub(": ", "", sequence)
+                    #sequence = re.sub("[,;#*)(]", "", sequence)
+                    #sequence = re.sub(": ", "", sequence)
+                    #sequence = re.sub(". ", " ", sequence)
+                    #sequence = re.sub("/", " ", sequence)
 
                     sequence =re.sub("<\\s", "<", sequence)
                     sequence =re.sub("\\s>", ">", sequence)
@@ -64,7 +67,10 @@ def run(input_ann_dir, input_text_dir, outfn):
                     toks = sequence.split(" ")
                     for i in range(2, len(toks)-2):
                         tok = toks[i]
-                        #if re.match(r'<.*?>', tok):
+                        
+                        if not re.match(r'<?\w+', tok):
+                            continue
+
                         if tok.startswith("<"):
                             label = "1"
                             tok = tok[1:len(tok)-1]  
@@ -85,6 +91,92 @@ def run(input_ann_dir, input_text_dir, outfn):
     print "Total events is %d"%count
     print "Positive events is %d"%positive
 
+def generateTestInput(dataset_dir, test_dir, fn, maxlen=5):
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    vocab["UNK"] = 0
+    for word, idx in zip(words.iterkeys(), xrange(1, len(words)+1)):
+        if word == "UNK":
+            continue
+        vocab[word] = idx
+
+
+    with open(os.path.join(test_dir, fn), 'r') as f:
+
+        content = f.read()
+        sequence = ie_preprocess(content)
+        sequence = "UNK UNK " + sequence +  " UNK UNK" 
+        sequence = re.sub("\\s{2,}", " ", sequence)
+
+        toks = sequence.split(" ")
+        start_index = 0
+        Spans=[]
+        Features=[]
+        for i in range(2, len(toks)-2):
+            tok = toks[i]
+
+            if not re.match(r'\w+', tok):
+                continue
+
+            start_index = content.find(tok, start_index)
+            if start_index == -1:
+                print "unk is " +tok
+                print content
+                raise "im"
+
+            end_index = start_index+len(tok)
+            f.seek(start_index)
+            mention = f.read(end_index-start_index)
+
+            if mention != tok:
+                raise "mention didn't match tok"
+
+            Spans.append((start_index,end_index))
+            #print toks[i-2] + " "+ toks[i-1] + " " + tok + " "+toks[i+1] + " "+ toks[i+2]
+            Features.append(toks[i-2] + " "+ toks[i-1] + " " + tok + " "+toks[i+1] + " "+ toks[i+2])
+            
+        
+        spans = []
+        feats =[]
+        for i, (feat, span) in enumerate(zip(Features, Spans)):
+            toks_a = feat.split()
+            if toks_a[2] in vocab:
+                spans.append(span) 
+                feats.append(feat)               
+
+        X = np.zeros((len(spans), maxlen), dtype=np.int16)
+
+        count =0
+        for i, (feat, span) in enumerate(zip(feats, spans)):
+
+            toks_a = feat.split()
+
+            for j in range(maxlen):
+
+                if toks_a[j] not in vocab:
+                    count +=1
+                    continue
+
+                X[i, j] = vocab[toks_a[j]]
+
+        #print "unk words from test %d"%count
+        #print "total words %d"%len(Features)
+
+        assert len(spans) == len(X), "len mush be equal"
+
+        return spans, X
+        
+
+
 if __name__ == "__main__":
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -98,8 +190,10 @@ if __name__ == "__main__":
     input_ann_dev_dir=os.path.join(ann_dir, "Dev")
     input_text_dev_dir = os.path.join(plain_dir, "dev")
 
+    
     run(input_ann_train_dir, input_text_train_dir, os.path.join(data_dir, "train.txt"))
     run(input_ann_dev_dir, input_text_dev_dir, os.path.join(data_dir, "dev.txt"))
+
 
 
 

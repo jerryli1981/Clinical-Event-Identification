@@ -6,11 +6,12 @@ set -x
 ###################
 
 # training params
-epochs=50
+epochs=3
 step=0.01
 hiddenDim=50
-miniBatch=100
+minibatch=100
 optimizer=adagrad
+mode=$2
 #adagrad 0.05, adam 0.001, rms 0.01, adadelta 1 is bad on lstm, but step 3 is good on cnn
 #adam 0.001 is better on cnn than adadelta and rms, adam converge faster than adadelta
 #rms 0.01 is bttter on main_keras_graph
@@ -19,7 +20,7 @@ optimizer=adagrad
 export THEANO_FLAGS=mode=FAST_RUN,device=$1,floatX=float32
 
 python -u main_lasagne.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
-                  			--minibatch $miniBatch 
+                  			--minibatch $minibatch  --mode $mode
 
 
 
