@@ -5,6 +5,7 @@ Preprocessing script for thyme data.
 
 import os
 import glob
+from utils import generateTrainInput
 
 def make_dirs(dirs):
     for d in dirs:
@@ -59,7 +60,6 @@ def build_word2Vector(glove_path, data_dir, vocab_name):
 
     word_embedding_matrix = np.zeros(shape=(300, len(vocab)+1))  
 
-    
     import gzip
     wordSet = defaultdict(int)
 
@@ -85,22 +85,28 @@ def build_word2Vector(glove_path, data_dir, vocab_name):
         pickle.dump(word_embedding_matrix,fid)
 
 if __name__ == '__main__':
-    print('=' * 80)
-    print('Preprocessing thyme dataset')
-    print('=' * 80)
+
+    window_size = 5
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
+
+    ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
+    plain_dir = os.path.join(base_dir, 'original')
+
+    generateTrainInput(os.path.join(ann_dir, "Train"), os.path.join(plain_dir, "train"), 
+        os.path.join(data_dir, "train.txt"), window_size)
+    generateTrainInput(os.path.join(ann_dir, "Dev"), os.path.join(plain_dir, "dev"), 
+        os.path.join(data_dir, "dev.txt"), window_size)
+ 
     train_dir = os.path.join(data_dir, 'train')
     dev_dir = os.path.join(data_dir, 'dev')
-    #test_dir = os.path.join(data_dir, 'test')
 
     make_dirs([train_dir, dev_dir])
 
     # split into separate files
     split(os.path.join(data_dir, 'train.txt'), train_dir)
     split(os.path.join(data_dir, 'dev.txt'), dev_dir)
-    #split(os.path.join(data_dir, 'test.txt'), test_dir)
 
     # get vocabulary
     build_vocab(

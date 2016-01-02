@@ -27,10 +27,9 @@ from lasagne.objectives import categorical_crossentropy, squared_error, categori
 from lasagne.updates import sgd, adagrad, adadelta, nesterov_momentum, rmsprop, adam
 from lasagne.init import GlorotUniform
 
-from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap
-from generateTrainData import generateTestInput
+from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
-def build_network_1dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
+def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen):
 
     print("Building model with 1D Convolution")
 
@@ -42,19 +41,19 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, maxlen=5):
 
     #CNN_sentence config
     filter_size=2
-    pool_size=maxlen-filter_size+1
+    pool_size=seqlen-filter_size+1
 
-    input = InputLayer((None, maxlen),input_var=input_var)
+    input = InputLayer((None, seqlen),input_var=input_var)
     batchsize, seqlen = input.input_var.shape
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    emb.params[emb.W].remove('trainable') #(batchsize, maxlen, wordDim)
+    emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
 
     #print get_output_shape(emb)
 
     reshape = DimshuffleLayer(emb, (0, 2, 1))
 
     #print get_output_shape(reshape)
-    #reshape = ReshapeLayer(emb, (batchsize, wordDim, maxlen))
+    #reshape = ReshapeLayer(emb, (batchsize, wordDim, seqlen))
 
     conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=filter_size, stride=stride, 
         nonlinearity=tanh,W=GlorotUniform()) #(None, 100, 34, 1)
@@ -140,7 +139,7 @@ if __name__ == '__main__':
     # Load the dataset
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
-    
+
     model_dir = os.path.join(base_dir, 'models')
     if not os.path.exists(model_dir):
             os.makedirs(model_dir)
@@ -166,14 +165,18 @@ if __name__ == '__main__':
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
 
-    train_fn, val_fn, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings)
+    
 
     if args.mode == "train":
 
         print("Loading training data...")
 
-        X_train, Y_labels_train = read_sequence_dataset(data_dir, "train")
-        X_dev, Y_labels_dev = read_sequence_dataset(data_dir, "dev")
+        X_train, Y_labels_train, num_feats = read_sequence_dataset(data_dir, "train")
+        X_dev, Y_labels_dev,_ = read_sequence_dataset(data_dir, "dev")
+
+        print "window_size is %d"%((num_feats-1)/2)
+
+        train_fn, val_fn, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen=num_feats)
 
         print("Starting training...")
         best_val_acc = 0
@@ -218,6 +221,9 @@ if __name__ == '__main__':
     elif args.mode == "test":
 
         print("Loading model...")
+        _, _,num_feats = read_sequence_dataset(data_dir, "dev")
+        _, _, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen=num_feats)
+
         print model_save_pre_path
         saved_params = load_network(model_save_pre_path)
         set_all_param_values(network, saved_params)
@@ -234,11 +240,13 @@ if __name__ == '__main__':
 
         input_text_test_dir = os.path.join(plain_dir, "test")
 
+        window_size = (num_feats-1)/2
+
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
             for fn in file_names:
                 #print fn
-                spans, features = generateTestInput(data_dir, input_text_test_dir, fn)
+                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size)
                 predict = pred_fn(features)
 
                 dn = os.path.join(output_dir, fn)
