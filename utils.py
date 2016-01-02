@@ -5,6 +5,9 @@ import re
 import nltk
 import anafora
 
+from nltk.tag.perceptron import PerceptronTagger
+tagger = PerceptronTagger()
+
 def feature_extraction(content, window_size):
 
     sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
@@ -24,8 +27,8 @@ def feature_extraction(content, window_size):
         tok = toks[i]
         if not re.match(r'\w+',tok):
             continue
-
-        tok_tag = nltk.pos_tag([tok])
+            
+        tok_tag = nltk.tag._pos_tag([tok], None, tagger)
 
         if not tok_tag[0][1].startswith("NN") and not tok_tag[0][1].startswith("VB"):
             continue
@@ -36,10 +39,13 @@ def feature_extraction(content, window_size):
   
         spans.append((start_index,start_index+len(tok)))
 
-        feat = [toks[i-j-1] for j in reversed(range(window_size))]
+        feat = []
+        for j in reversed(range(window_size)):
+            feat.append(toks[i-j-1])
         feat.append(tok)
-        feat = [toks[i+j+1] for j in range(window_size)]
-
+        for j in range(window_size):
+            feat.append(toks[i+j+1])
+ 
         features.append(" ".join(feat))
 
     return spans, features
