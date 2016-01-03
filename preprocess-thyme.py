@@ -28,7 +28,8 @@ def split(filepath, dst_dir):
     with open(filepath) as datafile, \
          open(os.path.join(dst_dir, 'feature.toks'), 'w') as afile, \
          open(os.path.join(dst_dir, 'label.txt'),'w') as labelfile:
-            datafile.readline()
+            num_feats, window_size = datafile.readline().strip().split('\t')
+            afile.write(num_feats+"\t"+window_size+"\n")
             for line in datafile:
                 feature, lab = line.strip().split('\t')
                 afile.write(feature+'\n')
@@ -82,7 +83,8 @@ def build_word2Vector(glove_path, data_dir, vocab_name):
 
 if __name__ == '__main__':
 
-    window_size = 3
+    window_size = 2
+    num_feats=2
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
@@ -91,10 +93,10 @@ if __name__ == '__main__':
     plain_dir = os.path.join(base_dir, 'original')
 
     generateTrainInput(os.path.join(ann_dir, "Train"), os.path.join(plain_dir, "train"), 
-        os.path.join(data_dir, "train.txt"), window_size)
+        os.path.join(data_dir, "train.txt"), window_size, num_feats)
 
     generateTrainInput(os.path.join(ann_dir, "Dev"), os.path.join(plain_dir, "dev"), 
-        os.path.join(data_dir, "dev.txt"), window_size)
+        os.path.join(data_dir, "dev.txt"), window_size, num_feats)
  
     train_dir = os.path.join(data_dir, 'train')
     dev_dir = os.path.join(data_dir, 'dev')

@@ -29,40 +29,47 @@ from lasagne.init import GlorotUniform
 
 from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
-def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen):
+def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
 
     print("Building model with 1D Convolution")
 
     vocab_size = wordEmbeddings.shape[1]
     wordDim = wordEmbeddings.shape[0]
 
-    num_filters = 100
+    kw = 2
+    num_filters = seqlen-kw+1
     stride = 1 
 
+    #important context words as channels
+ 
     #CNN_sentence config
-    filter_size=2
+    filter_size=wordDim
     pool_size=seqlen-filter_size+1
 
-    input = InputLayer((None, seqlen),input_var=input_var)
-    batchsize, seqlen = input.input_var.shape
+    input = InputLayer((None, seqlen, num_feats),input_var=input_var)
+    batchsize, _, _ = input.input_var.shape
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     #emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
 
-    #print get_output_shape(emb)
+    print get_output_shape(emb)
+    reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
+    print get_output_shape(reshape)
 
-    reshape = DimshuffleLayer(emb, (0, 2, 1))
+    conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()) #nOutputFrame = num_flters, 
+                                            #nOutputFrameSize = (num_feats*wordDim-filter_size)/stride +1
 
-    #print get_output_shape(reshape)
-    #reshape = ReshapeLayer(emb, (batchsize, wordDim, seqlen))
+    print get_output_shape(conv1d)
 
-    conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=filter_size, stride=stride, 
-        nonlinearity=tanh,W=GlorotUniform()) #(None, 100, 34, 1)
+    conv1d = DimshuffleLayer(conv1d, (0,2,1))
 
-    #print get_output_shape(conv1d)
+    print get_output_shape(conv1d)
+
+    pool_size=num_filters
 
     maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) #(None, 100, 1, 1) 
 
-    #print get_output_shape(maxpool)
+    print get_output_shape(maxpool)
   
     #forward = FlattenLayer(maxpool) #(None, 100) #(None, 50400)
 
@@ -159,24 +166,22 @@ if __name__ == '__main__':
         fileIdx += 1
 
 
-    input_var = T.imatrix('inputs')
+    input_var = T.itensor3('inputs')
     target_var = T.fmatrix('targets')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
 
-    
-
     if args.mode == "train":
 
         print("Loading training data...")
 
-        X_train, Y_labels_train, num_feats = read_sequence_dataset(data_dir, "train")
-        X_dev, Y_labels_dev,_ = read_sequence_dataset(data_dir, "dev")
+        X_train, Y_labels_train, seqlen, num_feats = read_sequence_dataset(data_dir, "train")
+        X_dev, Y_labels_dev,_,_ = read_sequence_dataset(data_dir, "dev")
 
-        print "window_size is %d"%((num_feats-1)/2)
+        print "window_size is %d"%((seqlen-1)/2)
 
-        train_fn, val_fn, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen=num_feats)
+        train_fn, val_fn, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
         best_val_acc = 0

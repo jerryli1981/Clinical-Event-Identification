@@ -8,24 +8,22 @@ import anafora
 from nltk.tag.perceptron import PerceptronTagger
 tagger = PerceptronTagger()
 
-def feature_extraction(content, window_size):
+def feature_extraction(content, window_size, num_feats=2):
 
     sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
-
-    headPadTok = "UNK "
-    tailPadTok = " UNK"
-
-    sequence = headPadTok*window_size + sequence + tailPadTok*window_size
     sequence = re.sub("\\s{2,}", " ", sequence)
     toks = sequence.split(" ")
 
+    spans = []
+    features = []
+
     start_index = 0
-    spans=[]
-    features=[]
 
-    for i in range(window_size, len(toks)-window_size):
+    for i in range(window_size):
+        features.append("NN UNK")
 
-        tok = toks[i]
+    for tok in toks:
+
         if not re.match(r'\w+',tok):
             continue
 
@@ -38,27 +36,39 @@ def feature_extraction(content, window_size):
             raise "tok not in the original content"
   
         spans.append((start_index,start_index+len(tok)))
+        features.append(pos+" "+tok)
 
-        feat = []
+    for i in range(window_size):
+        features.append("NN UNK")
+
+    context_feats = []
+
+    for i in range(window_size, len(features)-window_size):
+
+        c_ft = []
         for j in reversed(range(window_size)):
-            feat.append(toks[i-j-1])
-        feat.append(tok)
+            c_ft.append(features[i-j-1])
+        c_ft.append(features[i])
         for j in range(window_size):
-            feat.append(toks[i+j+1])
+            c_ft.append(features[i+j+1])
 
-        context_feat = " ".join(feat)
+        context_feat = " ".join(c_ft)
  
-        features.append(pos+" "+context_feat)
+        context_feats.append(context_feat)
 
-    return spans, features
+    assert len(spans) == len(context_feats), "size is wrong"
+
+    return spans, context_feats
 
 
-def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3):
+def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_feats=2):
 
     total=0
     positive = 0
 
     with open(outfn, 'w') as tr:
+
+        tr.write(str(num_feats)+"\t"+str(window_size)+"\n")
 
         for sub_dir, text_name, xml_names in anafora.walk(input_ann_dir):
 
@@ -83,8 +93,8 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3):
                             span_set.add((startoffset,endoffset))
 
                     
-                    spans, features = feature_extraction(f.read(), window_size)
-
+                    spans, features = feature_extraction(f.read(), window_size, num_feats)
+                    
                     for feat, span in zip(features, spans):
                         total += 1
                         if span in span_set:
@@ -179,14 +189,18 @@ def read_sequence_dataset(dataset_dir, dataset_name):
     labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
 
     with open(a_s) as f:
-        line = f.readline()
-        num_feats = len(line.split(" "))
+        num_feats, window_size = f.readline().strip().split('\t')
+
+    num_feats = int(num_feats)
+    window_size = int(window_size)
 
     data_size = len([line.rstrip('\n') for line in open(a_s)])
 
     labels = []
 
-    X = np.zeros((data_size, num_feats), dtype=np.int16)
+    seqlen = 2*window_size+1
+
+    X = np.zeros((data_size, seqlen, num_feats), dtype=np.int16)
 
     from collections import defaultdict
     words = defaultdict(int)
@@ -202,7 +216,7 @@ def read_sequence_dataset(dataset_dir, dataset_name):
         vocab[word] = idx
 
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
-                        
+        f1.readline()                 
         for i, (a, ent) in enumerate(zip(f1,f4)):
 
             a = a.rstrip('\n')
@@ -211,14 +225,20 @@ def read_sequence_dataset(dataset_dir, dataset_name):
             labels.append(label)
 
             toks_a = a.split()
+            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
 
-            for j in range(num_feats):
-                X[i, j] = vocab[toks_a[j]]
-                  
+            step = 0
+            for j in range(seqlen):
+
+                for k in range(num_feats):
+                    X[i, j, k] = vocab[toks_a[step+k]]
+
+                step += num_feats
+         
     Y_labels = np.zeros((len(labels), 2))
     for i in range(len(labels)):
         Y_labels[i, labels[i]] = 1.
 
-    return X, Y_labels, num_feats
+    return X, Y_labels, seqlen, num_feats
 
 
