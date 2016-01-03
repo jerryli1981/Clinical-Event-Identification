@@ -22,16 +22,16 @@ def feature_extraction(content, window_size):
     start_index = 0
     spans=[]
     features=[]
+
     for i in range(window_size, len(toks)-window_size):
 
         tok = toks[i]
         if not re.match(r'\w+',tok):
             continue
-            
+
         tok_tag = nltk.tag._pos_tag([tok], None, tagger)
 
-        if not tok_tag[0][1].startswith("NN") and not tok_tag[0][1].startswith("VB"):
-            continue
+        pos = tok_tag[0][1]
 
         start_index = content.find(tok, start_index)
         if start_index == -1:
@@ -45,8 +45,10 @@ def feature_extraction(content, window_size):
         feat.append(tok)
         for j in range(window_size):
             feat.append(toks[i+j+1])
+
+        context_feat = " ".join(feat)
  
-        features.append(" ".join(feat))
+        features.append(pos+" "+context_feat)
 
     return spans, features
 
@@ -80,6 +82,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3):
                             endoffset = annotation.spans[0][1]
                             span_set.add((startoffset,endoffset))
 
+                    
                     spans, features = feature_extraction(f.read(), window_size)
 
                     for feat, span in zip(features, spans):
@@ -91,6 +94,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3):
                             label = "0"
 
                         tr.write(feat + "\t" + label+"\n")
+                    
     
     print "Total events is %d"%total
     print "Positive events is %d"%positive
@@ -194,10 +198,7 @@ def read_sequence_dataset(dataset_dir, dataset_name):
             words[tok.rstrip('\n')] += 1
 
     vocab = {}
-    vocab["UNK"] = 0
-    for word, idx in zip(words.iterkeys(), xrange(1, len(words)+1)):
-        if word == "UNK":
-            continue
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
@@ -212,11 +213,7 @@ def read_sequence_dataset(dataset_dir, dataset_name):
             toks_a = a.split()
 
             for j in range(num_feats):
-                if j < num_feats - len(toks_a):
-                    X[i,j] = vocab["UNK"]
-        
-                else:
-                    X[i, j] = vocab[toks_a[j-num_feats+len(toks_a)]]
+                X[i, j] = vocab[toks_a[j]]
                   
     Y_labels = np.zeros((len(labels), 2))
     for i in range(len(labels)):

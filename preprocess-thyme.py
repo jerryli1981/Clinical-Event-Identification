@@ -48,17 +48,13 @@ def build_word2Vector(glove_path, data_dir, vocab_name):
             words[tok.rstrip('\n')] += 1
 
     vocab = {}
-    vocab["UNK"] = 0
-    for word, idx in zip(words.iterkeys(), xrange(1, len(words)+1)):
-        if word == "UNK":
-            continue
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
     print "word size", len(words)
     print "vocab size", len(vocab)
 
-
-    word_embedding_matrix = np.zeros(shape=(300, len(vocab)+1))  
+    word_embedding_matrix = np.zeros(shape=(300, len(vocab)))  
 
     import gzip
     wordSet = defaultdict(int)
@@ -86,7 +82,7 @@ def build_word2Vector(glove_path, data_dir, vocab_name):
 
 if __name__ == '__main__':
 
-    window_size = 5
+    window_size = 3
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
@@ -96,6 +92,7 @@ if __name__ == '__main__':
 
     generateTrainInput(os.path.join(ann_dir, "Train"), os.path.join(plain_dir, "train"), 
         os.path.join(data_dir, "train.txt"), window_size)
+
     generateTrainInput(os.path.join(ann_dir, "Dev"), os.path.join(plain_dir, "dev"), 
         os.path.join(data_dir, "dev.txt"), window_size)
  
