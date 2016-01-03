@@ -200,7 +200,7 @@ def read_sequence_dataset(dataset_dir, dataset_name):
 
     seqlen = 2*window_size+1
 
-    X = np.zeros((data_size, seqlen, num_feats), dtype=np.int16)
+    X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
 
     from collections import defaultdict
     words = defaultdict(int)
