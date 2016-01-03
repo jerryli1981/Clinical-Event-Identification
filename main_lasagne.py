@@ -46,7 +46,7 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen):
     input = InputLayer((None, seqlen),input_var=input_var)
     batchsize, seqlen = input.input_var.shape
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
+    #emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
 
     #print get_output_shape(emb)
 
@@ -77,7 +77,7 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen):
     loss = T.mean(binary_crossentropy(prediction,target_var))
     lambda_val = 0.5 * 1e-4
 
-    layers = {conv1d:lambda_val, hid:lambda_val, network:lambda_val} 
+    layers = {emb:lambda_val, conv1d:lambda_val, hid:lambda_val, network:lambda_val} 
     penalty = regularize_layer_params_weighted(layers, l2)
     loss = loss + penalty
 
