@@ -115,6 +115,6 @@ if __name__ == '__main__':
         os.path.join(data_dir, 'vocab-cased.txt'),
         lowercase=False)
 
-    glove_path = os.path.join('/Users/peng/Develops/NLP-Tools', 'glove.840B.300d.txt')
+    glove_path = os.path.join('../NLP-Tools', 'glove.840B.300d.txt')
     build_word2Vector(glove_path, data_dir, 'vocab-cased.txt')
    
