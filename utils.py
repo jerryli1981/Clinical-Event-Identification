@@ -121,7 +121,7 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
             words[tok.rstrip('\n')] += 1
 
     vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(1, len(words)+1)):
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
     seqlen = 2*window_size+1
@@ -129,6 +129,7 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
         Spans, Features = feature_extraction(f.read(), window_size, num_feats)
 
+        """
         spans = []
         feats =[]
         for i, (feat, span) in enumerate(zip(Features, Spans)):
@@ -144,10 +145,10 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
             if flag:
                 spans.append(span) 
                 feats.append(feat)               
+        """
+        X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
 
-        X = np.zeros((len(spans), seqlen, num_feats), dtype=np.int16)
-
-        for i, feat in enumerate(feats):
+        for i, feat in enumerate(Features):
 
             toks_a = feat.split()
             step = 0
@@ -158,7 +159,7 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
                 step += num_feats
 
-        return spans, X
+        return Spans, X
 
 
 def iterate_minibatches_(inputs, batchsize, shuffle=False):
