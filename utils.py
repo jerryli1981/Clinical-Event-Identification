@@ -127,7 +127,6 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
     seqlen = 2*window_size+1
     with open(os.path.join(test_dir, fn), 'r') as f:
 
-        content = f.read()
         Spans, Features = feature_extraction(f.read(), window_size, num_feats)
 
         spans = []

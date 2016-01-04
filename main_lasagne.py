@@ -226,7 +226,9 @@ if __name__ == '__main__':
     elif args.mode == "test":
 
         print("Loading model...")
+        
         _, _,seqlen, num_feats = read_sequence_dataset(data_dir, "dev")
+        
         _, _, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print model_save_pre_path
@@ -238,20 +240,21 @@ if __name__ == '__main__':
         output = T.argmax(p_y_given_x, axis=1)
 
         pred_fn = theano.function([input_var], output)
-
+        
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
         output_dir = os.path.join(base_dir, 'uta-output')
 
         input_text_test_dir = os.path.join(plain_dir, "test")
 
-        window_size = (num_feats-1)/2
+        window_size = (seqlen-1)/2
 
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
             for fn in file_names:
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+                
                 predict = pred_fn(features)
 
                 dn = os.path.join(output_dir, fn)
@@ -289,6 +292,7 @@ if __name__ == '__main__':
                             count += 1
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
+                
 
         os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 
