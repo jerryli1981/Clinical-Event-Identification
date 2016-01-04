@@ -226,8 +226,8 @@ if __name__ == '__main__':
     elif args.mode == "test":
 
         print("Loading model...")
-        _, _,num_feats = read_sequence_dataset(data_dir, "dev")
-        _, _, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen=num_feats)
+        _, _,seqlen, num_feats = read_sequence_dataset(data_dir, "dev")
+        _, _, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print model_save_pre_path
         saved_params = load_network(model_save_pre_path)
@@ -251,7 +251,7 @@ if __name__ == '__main__':
 
             for fn in file_names:
                 #print fn
-                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size)
+                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
                 predict = pred_fn(features)
 
                 dn = os.path.join(output_dir, fn)

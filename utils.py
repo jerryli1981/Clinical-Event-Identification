@@ -109,7 +109,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_
     print "Total events is %d"%total
     print "Positive events is %d"%positive
 
-def generateTestInput(dataset_dir, test_dir, fn, window_size):
+def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
     from collections import defaultdict
     words = defaultdict(int)
@@ -121,45 +121,38 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size):
             words[tok.rstrip('\n')] += 1
 
     vocab = {}
-    vocab["UNK"] = 0
     for word, idx in zip(words.iterkeys(), xrange(1, len(words)+1)):
-        if word == "UNK":
-            continue
         vocab[word] = idx
 
     seqlen = 2*window_size+1
     with open(os.path.join(test_dir, fn), 'r') as f:
 
         content = f.read()
-        Spans, Features = feature_extraction(content, window_size)
+        Spans, Features = feature_extraction(f.read(), window_size, num_feats)
 
         spans = []
         feats =[]
         for i, (feat, span) in enumerate(zip(Features, Spans)):
-            toks_a = feat.split()
-            if toks_a[2] in vocab:
+            toks = feat.split()
+
+            word = toks[len(toks)/2]
+
+            if word in vocab:
                 spans.append(span) 
                 feats.append(feat)               
 
-        X = np.zeros((len(spans), seqlen), dtype=np.int16)
+        X = np.zeros((len(spans), seqlen, num_feats), dtype=np.int16)
 
-        count =0
-        for i, (feat, span) in enumerate(zip(feats, spans)):
+        for i, feat in enumerate(feats):
 
             toks_a = feat.split()
-
+            step = 0
             for j in range(seqlen):
 
-                if toks_a[j] not in vocab:
-                    count +=1
-                    continue
+                for k in range(num_feats):
+                    X[i, j, k] = vocab[toks_a[step+k]]
 
-                X[i, j] = vocab[toks_a[j]]
-
-        #print "unk words from test %d"%count
-        #print "total words %d"%len(Features)
-
-        assert len(spans) == len(X), "len mush be equal"
+                step += num_feats
 
         return spans, X
 
