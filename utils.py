@@ -134,9 +134,14 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         for i, (feat, span) in enumerate(zip(Features, Spans)):
             toks = feat.split()
 
-            word = toks[len(toks)/2]
+            #word = toks[len(toks)/2]
 
-            if word in vocab:
+            flag = True
+            for tok in toks:
+                if tok not in vocab:
+                    flag = False
+
+            if flag:
                 spans.append(span) 
                 feats.append(feat)               
 
