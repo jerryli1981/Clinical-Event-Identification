@@ -24,12 +24,13 @@ def feature_extraction(content, window_size, num_feats=2):
 
     for tok in toks:
 
-        if not re.match(r'\w+',tok):
+        if not re.match(r'\w+', tok):
             continue
 
         tok_tag = nltk.tag._pos_tag([tok], None, tagger)
 
         pos = tok_tag[0][1]
+
 
         start_index = content.find(tok, start_index)
         if start_index == -1:
@@ -80,7 +81,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_
 
                 for xml_name in xml_names:
 
-                    if "Temporal-Relation" not in xml_name:
+                    if "Temporal" not in xml_name:
                         continue
 
                     xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
@@ -91,8 +92,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_
                             startoffset = annotation.spans[0][0]
                             endoffset = annotation.spans[0][1]
                             span_set.add((startoffset,endoffset))
-
-                    
+                
                     spans, features = feature_extraction(f.read(), window_size, num_feats)
                     
                     for feat, span in zip(features, spans):

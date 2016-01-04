@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     generateTrainInput(os.path.join(ann_dir, "Train"), os.path.join(plain_dir, "train"), 
         os.path.join(data_dir, "train.txt"), window_size, num_feats)
-
+    
     generateTrainInput(os.path.join(ann_dir, "Dev"), os.path.join(plain_dir, "dev"), 
         os.path.join(data_dir, "dev.txt"), window_size, num_feats)
  
