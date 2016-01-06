@@ -29,7 +29,7 @@ from lasagne.init import GlorotUniform
 
 from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
-def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
+def event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
 
     print("Building model with 1D Convolution")
 
@@ -51,27 +51,27 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, nu
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     #emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
 
-    print get_output_shape(emb)
+    #print get_output_shape(emb)
     reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
-    print get_output_shape(reshape)
+    #print get_output_shape(reshape)
 
     conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
         nonlinearity=tanh,W=GlorotUniform()) #nOutputFrame = num_flters, 
                                             #nOutputFrameSize = (num_feats*wordDim-filter_size)/stride +1
 
-    print get_output_shape(conv1d)
+    #print get_output_shape(conv1d)
 
     conv1d = DimshuffleLayer(conv1d, (0,2,1))
 
-    print get_output_shape(conv1d)
+    #print get_output_shape(conv1d)
 
     pool_size=num_filters
 
-    maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) #(None, 100, 1, 1) 
+    maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) 
 
-    print get_output_shape(maxpool)
+    #print get_output_shape(maxpool)
   
-    #forward = FlattenLayer(maxpool) #(None, 100) #(None, 50400)
+    #forward = FlattenLayer(maxpool) 
 
     #print get_output_shape(forward)
  
@@ -106,7 +106,6 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, nu
     else:
         raise "Need set optimizer correctly"
  
-
     test_prediction = get_output(network, deterministic=True)
     test_loss = T.mean(binary_crossentropy(test_prediction,target_var))
 
@@ -114,6 +113,94 @@ def build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, nu
         loss, updates=updates, allow_input_downcast=True)
 
     test_acc = T.mean(binary_accuracy(test_prediction, target_var))
+    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
+
+    return train_fn, val_fn, network
+
+def event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
+
+    print("Building model with 1D Convolution")
+
+    vocab_size = wordEmbeddings.shape[1]
+    wordDim = wordEmbeddings.shape[0]
+
+    kw = 2
+    num_filters = seqlen-kw+1
+    stride = 1 
+
+    #important context words as channels
+ 
+    #CNN_sentence config
+    filter_size=wordDim
+    pool_size=seqlen-filter_size+1
+
+    input = InputLayer((None, seqlen, num_feats),input_var=input_var)
+    batchsize, _, _ = input.input_var.shape
+    emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
+    #emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
+
+    #print get_output_shape(emb)
+    reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
+    #print get_output_shape(reshape)
+
+    conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()) #nOutputFrame = num_flters, 
+                                            #nOutputFrameSize = (num_feats*wordDim-filter_size)/stride +1
+
+    #print get_output_shape(conv1d)
+
+    conv1d = DimshuffleLayer(conv1d, (0,2,1))
+
+    #print get_output_shape(conv1d)
+
+    pool_size=num_filters
+
+    maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) 
+
+    #print get_output_shape(maxpool)
+  
+    #forward = FlattenLayer(maxpool) 
+
+    #print get_output_shape(forward)
+ 
+    hid = DenseLayer(maxpool, num_units=args.hiddenDim, nonlinearity=sigmoid)
+
+    network = DenseLayer(hid, num_units=3, nonlinearity=softmax)
+
+    prediction = get_output(network)
+    
+    loss = T.mean(categorical_crossentropy(prediction,target_var))
+    lambda_val = 0.5 * 1e-4
+
+    layers = {emb:lambda_val, conv1d:lambda_val, hid:lambda_val, network:lambda_val} 
+    penalty = regularize_layer_params_weighted(layers, l2)
+    loss = loss + penalty
+
+
+    params = get_all_params(network, trainable=True)
+
+    if args.optimizer == "sgd":
+        updates = sgd(loss, params, learning_rate=args.step)
+    elif args.optimizer == "adagrad":
+        updates = adagrad(loss, params, learning_rate=args.step)
+    elif args.optimizer == "adadelta":
+        updates = adadelta(loss, params, learning_rate=args.step)
+    elif args.optimizer == "nesterov":
+        updates = nesterov_momentum(loss, params, learning_rate=args.step)
+    elif args.optimizer == "rms":
+        updates = rmsprop(loss, params, learning_rate=args.step)
+    elif args.optimizer == "adam":
+        updates = adam(loss, params, learning_rate=args.step)
+    else:
+        raise "Need set optimizer correctly"
+ 
+    test_prediction = get_output(network, deterministic=True)
+    test_loss = T.mean(categorical_crossentropy(test_prediction,target_var))
+
+    train_fn = theano.function([input_var, target_var], 
+        loss, updates=updates, allow_input_downcast=True)
+
+    test_acc = T.mean(categorical_accuracy(test_prediction, target_var))
     val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
 
     return train_fn, val_fn, network
@@ -181,49 +268,74 @@ if __name__ == '__main__':
 
         print "window_size is %d"%((seqlen-1)/2)
 
-        train_fn, val_fn, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        train_fn_span, val_fn_span, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+
+        train_fn_pol, val_fn_pol, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
-        best_val_acc = 0
-        best_val_pearson = 0
+        best_val_acc_span = 0
+        best_val_acc_pol = 0
+
         for epoch in range(args.epochs):
-            train_err = 0
+            train_loss_span = 0
+            train_loss_pol = 0
             train_batches = 0
             start_time = time.time()
             for batch in iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True):
 
                 inputs, labels= batch
-                train_err += train_fn(inputs, labels)
+
+                train_loss_span += train_fn_span(inputs, labels[:,0:2])
+                train_loss_pol += train_fn_pol(inputs, labels[:,2:])
+
                 train_batches += 1
      
-            val_err = 0
-            val_acc = 0
+            val_loss_span = 0
+            val_acc_span = 0
+            val_loss_pol=0
+            val_acc_pol=0
             val_batches = 0
-            val_pearson = 0
 
             for batch in iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False):
 
                 inputs, labels= batch
 
-                err, acc = val_fn(inputs, labels)
-                val_acc += acc
-                val_err += err
+                loss_span, acc_span = val_fn_span(inputs, labels[:,0:2])
+                val_acc_span += acc_span
+                val_loss_span+= loss_span
+
+                loss_pol, acc_pol = val_fn_pol(inputs, labels[:,2:])
+                val_acc_pol += acc_pol
+                val_loss_pol += loss_pol
+
                 val_batches += 1
 
                 
             print("Epoch {} of {} took {:.3f}s".format(
                 epoch + 1, args.epochs, time.time() - start_time))
-            print("  training loss:\t\t{:.6f}".format(train_err / train_batches))
-            print("  validation loss:\t\t{:.6f}".format(val_err / val_batches))
 
-            val_score = val_acc / val_batches * 100
-            print("  validation accuracy:\t\t{:.2f} %".format(val_score))
-            if best_val_acc < val_score:
-                best_val_acc = val_score
-                save_network(model_save_path,get_all_param_values(network))
+            print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
+            print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
+
+            print("  span validation loss:\t\t{:.6f}".format(val_loss_span / val_batches))
+            print("  Polarity validation loss:\t\t{:.6f}".format(val_loss_pol / val_batches))
+
+            val_score_span = val_acc_span / val_batches * 100
+            print("  span validation accuracy:\t\t{:.2f} %".format(val_score_span))
+            if best_val_acc_span < val_score_span:
+                best_val_acc_span = val_score_span
+                save_network(model_save_path+".span",get_all_param_values(network_span))
+
+            val_score_pol = val_acc_pol / val_batches * 100
+            print("  polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
+            if best_val_acc_pol < val_score_pol:
+                best_val_acc_pol = val_score_pol
+                save_network(model_save_path+".pol",get_all_param_values(network_pol))
     
 
     elif args.mode == "test":
+
+        print("Starting testing...")
 
         print("Loading model...")
         
@@ -254,7 +366,7 @@ if __name__ == '__main__':
             for fn in file_names:
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
-                
+
                 predict = pred_fn(features)
 
                 dn = os.path.join(output_dir, fn)
