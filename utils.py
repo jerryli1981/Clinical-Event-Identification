@@ -8,6 +8,8 @@ import anafora
 from nltk.tag.perceptron import PerceptronTagger
 tagger = PerceptronTagger()
 
+Polarity = {"POS":"1", "NEG":"2"}
+
 def feature_extraction(content, window_size, num_feats=2):
 
     sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
@@ -86,26 +88,35 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_
 
                     xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
                     data = anafora.AnaforaData.from_file(xml_path)
-                    span_set = set()
+                    span_property_map = dict()
                     for annotation in data.annotations:
                         if annotation.type == 'EVENT':
                             startoffset = annotation.spans[0][0]
                             endoffset = annotation.spans[0][1]
-                            span_set.add((startoffset,endoffset))
+                            properties = annotation.properties
+                            pros = {}
+                            for pro_name in properties:
+                                pro_val = properties.__getitem__(pro_name)
+                                pros[pro_name] = pro_val
+
+                            span_property_map[(startoffset,endoffset)] = pros
+                            
                 
                     spans, features = feature_extraction(f.read(), window_size, num_feats)
                     
                     for feat, span in zip(features, spans):
                         total += 1
-                        if span in span_set:
-                            label = "1"
+                        if span in span_property_map:
+                            event = "1"
                             positive +=1
+                            polarity = Polarity[span_property_map[span]["Polarity"]]
                         else:
-                            label = "0"
+                            event = "0"
+                            polarity = "0"
 
-                        tr.write(feat + "\t" + label+"\n")
+                        tr.write(feat + "\t" + event+ " "+ polarity+"\n")
                     
-    
+
     print "Total events is %d"%total
     print "Positive events is %d"%positive
 
@@ -194,8 +205,7 @@ def read_sequence_dataset(dataset_dir, dataset_name):
 
     data_size = len([line.rstrip('\n') for line in open(a_s)])
 
-    labels = []
-
+    
     seqlen = 2*window_size+1
 
     X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
@@ -213,6 +223,10 @@ def read_sequence_dataset(dataset_dir, dataset_name):
     for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
+
+    
+    event_labels = []
+    polarity_labels=[]
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
         f1.readline()                 
         for i, (a, ent) in enumerate(zip(f1,f4)):
@@ -220,7 +234,9 @@ def read_sequence_dataset(dataset_dir, dataset_name):
             a = a.rstrip('\n')
             label = ent.rstrip('\n')
 
-            labels.append(label)
+            el, pl = label.split()
+            event_labels.append(el)
+            polarity_labels.append(pl)
 
             toks_a = a.split()
             assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
@@ -233,9 +249,13 @@ def read_sequence_dataset(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    Y_labels = np.zeros((len(labels), 2))
-    for i in range(len(labels)):
-        Y_labels[i, labels[i]] = 1.
+    #Either targets in [0, 1] matching the layout of predictions, 
+    #or a vector of int giving the correct class index per data point.
+
+    Y_labels = np.zeros((X.shape[0], 5))
+    for i in range(X.shape[0]):
+        Y_labels[i, int(event_labels[i])] = 1
+        Y_labels[i, 2+int(polarity_labels[i])] = 1
 
     return X, Y_labels, seqlen, num_feats
 
