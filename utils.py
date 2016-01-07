@@ -140,23 +140,6 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
         Spans, Features = feature_extraction(f.read(), window_size, num_feats)
 
-        """
-        spans = []
-        feats =[]
-        for i, (feat, span) in enumerate(zip(Features, Spans)):
-            toks = feat.split()
-
-            #word = toks[len(toks)/2]
-
-            flag = True
-            for tok in toks:
-                if tok not in vocab:
-                    flag = False
-
-            if flag:
-                spans.append(span) 
-                feats.append(feat)               
-        """
         X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
 
         for i, feat in enumerate(Features):
