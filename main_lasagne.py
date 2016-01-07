@@ -341,17 +341,30 @@ if __name__ == '__main__':
         
         _, _,seqlen, num_feats = read_sequence_dataset(data_dir, "dev")
         
-        _, _, network = build_network_1dconv(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        _, _, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+
+        _, _, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+
 
         print model_save_pre_path
-        saved_params = load_network(model_save_pre_path)
-        set_all_param_values(network, saved_params)
+        saved_params_span = load_network(model_save_path+".span")
+        set_all_param_values(network_span, saved_params_span)
 
-        p_y_given_x = get_output(network, deterministic=True)
+        saved_params_pol = load_network(model_save_path+".pol")
+        set_all_param_values(network_pol, saved_params_pol)
 
-        output = T.argmax(p_y_given_x, axis=1)
 
-        pred_fn = theano.function([input_var], output)
+        p_y_given_x_span = get_output(network_span, deterministic=True)
+
+        p_y_given_x_pol = get_output(network_pol, deterministic=True)
+
+        output_span = T.argmax(p_y_given_x_span, axis=1)
+
+        output_pol = T.argmax(p_y_given_x_pol, axis=1)
+
+        pred_fn_span = theano.function([input_var], output_span)
+
+        pred_fn_pol = theano.function([input_var], output_pol)
         
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
@@ -367,7 +380,9 @@ if __name__ == '__main__':
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
 
-                predict = pred_fn(features)
+                predict_span = pred_fn_span(features)
+
+                predict_pol = pred_fn_pol(features)
 
                 dn = os.path.join(output_dir, fn)
                 if not os.path.exists(dn):
@@ -384,8 +399,8 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, label in enumerate(predict):
-                        if label == 1:
+                    for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                        if span_label == 1:
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                             f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
@@ -395,7 +410,14 @@ if __name__ == '__main__':
                             f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
                             f.write("\t\t\t<Type>N/A</Type>\n")
                             f.write("\t\t\t<Degree>N/A</Degree>\n")
-                            f.write("\t\t\t<Polarity>POS</Polarity>\n")
+                            
+                            if pol_label == 1:
+                                f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
+                            elif pol_label == 2:
+                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                            else:
+                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                            
                             f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
