@@ -103,7 +103,7 @@ def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_
                             
                 
                     spans, features = feature_extraction(f.read(), window_size, num_feats)
-                    
+                   
                     for feat, span in zip(features, spans):
                         total += 1
                         if span in span_property_map:
@@ -251,6 +251,8 @@ if __name__=="__main__":
     import theano.tensor as T
     import sys
 
+    import scipy.io as sio
+
     sys.path.insert(0, os.path.abspath('../Lasagne'))
 
     from lasagne.layers import InputLayer, EmbeddingLayer, get_output,ReshapeLayer
@@ -259,29 +261,32 @@ if __name__=="__main__":
     data_dir = os.path.join(base_dir, 'data')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
+    wordEmbeddings = wordEmbeddings[:100,:]
 
     vocab_size = wordEmbeddings.shape[1]
     wordDim = wordEmbeddings.shape[0]
 
-    X_train, Y_labels_train, seqlen, num_feats, Y_labels = read_sequence_dataset(data_dir, "train")
+    X_train, _, seqlen, num_feats, Y_labels_train = read_sequence_dataset(data_dir, "train")
+
+    X_dev, _, seqlen, num_feats, Y_labels_dev = read_sequence_dataset(data_dir, "train")
 
     input_var = T.itensor3('inputs')
     l_in = InputLayer(X_train.shape)
     vocab_size = wordEmbeddings.shape[1]
     wordDim = wordEmbeddings.shape[0]
     emb = EmbeddingLayer(l_in, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-
     reshape = ReshapeLayer(emb, (X_train.shape[0], seqlen*num_feats*wordDim))
-
     output = get_output(reshape, input_var)
     f = theano.function([input_var], output)
 
-    y = f(X_train)
+    y_train = f(X_train)
+    merge_train = np.concatenate((y_train, Y_labels_train), axis=1)
 
-    merge = np.concatenate((y, Y_labels), axis=1)
+    y_dev = f(X_dev)
+    merge_dev = np.concatenate((y_dev, Y_labels_dev), axis=1)
 
-    merge.tofile("train.out")
-
+    sio.savemat('train.mat', {'train':merge_train})
+    sio.savemat('dev.mat', {'train':merge_dev})
 
 
 
