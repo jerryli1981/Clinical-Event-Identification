@@ -236,10 +236,57 @@ def read_sequence_dataset(dataset_dir, dataset_name):
     #or a vector of int giving the correct class index per data point.
 
     Y_labels = np.zeros((X.shape[0], 5))
+    Y_labels_ = np.zeros((X.shape[0], 2))
     for i in range(X.shape[0]):
         Y_labels[i, int(event_labels[i])] = 1
         Y_labels[i, 2+int(polarity_labels[i])] = 1
+        Y_labels_[i, 0] = int(event_labels[i])
+        Y_labels_[i, 1] = int(polarity_labels[i])
 
-    return X, Y_labels, seqlen, num_feats
+    return X, Y_labels, seqlen, num_feats, Y_labels_
+
+if __name__=="__main__":
+
+    import theano
+    import theano.tensor as T
+    import sys
+
+    sys.path.insert(0, os.path.abspath('../Lasagne'))
+
+    from lasagne.layers import InputLayer, EmbeddingLayer, get_output,ReshapeLayer
+
+    base_dir = os.path.dirname(os.path.realpath(__file__))
+    data_dir = os.path.join(base_dir, 'data')
+
+    wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
+
+    vocab_size = wordEmbeddings.shape[1]
+    wordDim = wordEmbeddings.shape[0]
+
+    X_train, Y_labels_train, seqlen, num_feats, Y_labels = read_sequence_dataset(data_dir, "train")
+
+    input_var = T.itensor3('inputs')
+    l_in = InputLayer(X_train.shape)
+    vocab_size = wordEmbeddings.shape[1]
+    wordDim = wordEmbeddings.shape[0]
+    emb = EmbeddingLayer(l_in, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
+
+    reshape = ReshapeLayer(emb, (X_train.shape[0], seqlen*num_feats*wordDim))
+
+    output = get_output(reshape, input_var)
+    f = theano.function([input_var], output)
+
+    y = f(X_train)
+
+    merge = np.concatenate((y, Y_labels), axis=1)
+
+    merge.tofile("train.out")
+
+
+
+
+
+
+
 
 
