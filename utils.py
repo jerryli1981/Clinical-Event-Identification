@@ -64,7 +64,7 @@ def feature_extraction(content, window_size, num_feats=2):
     return spans, context_feats
 
 
-def generateTrainInput(input_ann_dir, input_text_dir, outfn, window_size=3, num_feats=2):
+def preprocess_data(input_ann_dir, input_text_dir, outfn, window_size=3, num_feats=2):
 
     total=0
     positive = 0
@@ -280,8 +280,6 @@ if __name__=="__main__":
     f_train = theano.function([input_var_train], output_train)
     y_train = f_train(X_train)
     merge_train = np.concatenate((y_train, Y_labels_train), axis=1)
-
-
 
     input_var_dev = T.itensor3('inputs_dev')
     l_in_dev = InputLayer(X_dev.shape)
