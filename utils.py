@@ -268,7 +268,7 @@ if __name__=="__main__":
 
     X_train, _, seqlen, num_feats, Y_labels_train = read_sequence_dataset(data_dir, "train")
 
-    X_dev, _, seqlen, num_feats, Y_labels_dev = read_sequence_dataset(data_dir, "train")
+    X_dev, _, seqlen, num_feats, Y_labels_dev = read_sequence_dataset(data_dir, "dev")
 
     input_var = T.itensor3('inputs')
     l_in = InputLayer(X_train.shape)
@@ -286,7 +286,7 @@ if __name__=="__main__":
     merge_dev = np.concatenate((y_dev, Y_labels_dev), axis=1)
 
     sio.savemat('train.mat', {'train':merge_train})
-    sio.savemat('dev.mat', {'train':merge_dev})
+    sio.savemat('dev.mat', {'dev':merge_dev})
 
 
 
