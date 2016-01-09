@@ -247,6 +247,9 @@ if __name__ == '__main__':
         model_save_path = os.path.join(model_dir,
              'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx))
 
+        model_save_pre_path = os.path.join(model_dir,
+             'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx-1))
+
         if not os.path.exists(model_save_path+".span"):
             break
         fileIdx += 1
@@ -356,11 +359,11 @@ if __name__ == '__main__':
         _, _, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
 
-        print model_save_path
-        saved_params_span = load_network(model_save_path+".span")
+        print model_save_pre_path
+        saved_params_span = load_network(model_save_pre_path+".span")
         set_all_param_values(network_span, saved_params_span)
 
-        saved_params_pol = load_network(model_save_path+".pol")
+        saved_params_pol = load_network(model_save_pre_path+".pol")
         set_all_param_values(network_pol, saved_params_pol)
 
 
