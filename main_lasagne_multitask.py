@@ -65,8 +65,10 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     hid_2 = DenseLayer(maxpool_2, num_units=args.hiddenDim, nonlinearity=sigmoid)
     network_2 = DenseLayer(hid_2, num_units=3, nonlinearity=softmax)
 
+    # This is important?
+    network_1_out, network_2_out = get_output([network_1, network_2])
 
-    loss_1 = T.mean(binary_crossentropy(get_output(network_1),target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_1:lambda_val, 
+    loss_1 = T.mean(binary_crossentropy(network_1_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_1:lambda_val, 
                 hid_1:lambda_val, network_1:lambda_val} , l2)
     updates_1 = adagrad(loss_1, get_all_params(network_1, trainable=True), learning_rate=args.step)
     train_fn_1 = theano.function([input_var, target_var], 
@@ -75,7 +77,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     val_fn_1 = theano.function([input_var, target_var], val_acc_1, allow_input_downcast=True)
 
 
-    loss_2 = T.mean(categorical_crossentropy(get_output(network_2),target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_2:lambda_val, 
+    loss_2 = T.mean(categorical_crossentropy(network_2_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_2:lambda_val, 
                 hid_2:lambda_val, network_2:lambda_val} , l2)
     updates_2 = adagrad(loss_2, get_all_params(network_2, trainable=True), learning_rate=args.step)
     train_fn_2 = theano.function([input_var, target_var], 
@@ -125,10 +127,7 @@ if __name__ == '__main__':
         model_save_path = os.path.join(model_dir,
              'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx))
 
-        model_save_pre_path = os.path.join(model_dir,
-             'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx-1))
-
-        if not os.path.exists(model_save_path):
+        if not os.path.exists(model_save_path+".span"):
             break
         fileIdx += 1
 
@@ -249,7 +248,7 @@ if __name__ == '__main__':
         
         train_fn_span, val_fn_span, network_span, train_fn_pol, val_fn_pol, network_pol = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        print model_save_pre_path
+        print model_save_path
         saved_params_span = load_network(model_save_path+".span")
         set_all_param_values(network_span, saved_params_span)
 
