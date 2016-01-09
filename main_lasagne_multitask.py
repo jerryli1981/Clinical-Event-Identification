@@ -154,16 +154,18 @@ if __name__ == '__main__':
         best_val_acc_span = 0
         best_val_acc_pol = 0
 
+        maxlen = 0
+        for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
+            maxlen += 1
+
+        pbar = ProgressBar(maxval=maxlen).start()
+
         for epoch in range(args.epochs):
             train_loss_span = 0
             train_loss_pol = 0
             train_batches = 0
             start_time = time.time()
 
-            maxlen = 0
-            for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
-                maxlen += 1
-            pbar = ProgressBar(maxval=maxlen).start()
             for batch in pbar(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
      
                 inputs, labels= batch
@@ -179,13 +181,9 @@ if __name__ == '__main__':
 
                 train_batches += 1
 
-            pbar.finish()
-     
             val_acc_span = 0
             val_acc_pol=0
             val_batches = 0
-
-
 
             for batch in iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False):
 
@@ -224,8 +222,9 @@ if __name__ == '__main__':
             if best_val_acc_pol < val_score_pol:
                 best_val_acc_pol = val_score_pol
                 save_network(model_save_path+".pol",get_all_param_values(network_pol))
-    
 
+        pbar.finish()
+    
     elif args.mode == "test":
 
         print("Starting testing...")
