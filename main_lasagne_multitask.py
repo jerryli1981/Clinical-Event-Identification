@@ -158,13 +158,13 @@ if __name__ == '__main__':
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
             maxlen += 1
 
-        pbar = ProgressBar(maxval=maxlen).start()
-
         for epoch in range(args.epochs):
             train_loss_span = 0
             train_loss_pol = 0
             train_batches = 0
             start_time = time.time()
+
+            pbar = ProgressBar(maxval=maxlen).start()
 
             for batch in pbar(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
      
