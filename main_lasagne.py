@@ -289,7 +289,10 @@ if __name__ == '__main__':
             start_time = time.time()
 
             pbar = ProgressBar(maxval=maxlen).start()
-            for batch in pbar(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
+            for i, batch in enumerate(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 inputs, labels= batch
 

@@ -33,7 +33,6 @@ def feature_extraction(content, window_size, num_feats=2):
 
         pos = tok_tag[0][1]
 
-
         start_index = content.find(tok, start_index)
         if start_index == -1:
             raise "tok not in the original content"

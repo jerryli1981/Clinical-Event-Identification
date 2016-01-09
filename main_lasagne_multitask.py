@@ -166,10 +166,17 @@ if __name__ == '__main__':
 
             pbar = ProgressBar(maxval=maxlen).start()
 
-            for batch in pbar(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
+            for i, batch in enumerate(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
      
                 inputs, labels= batch
 
+                train_loss_span += train_fn_span(inputs, labels[:,0:2])
+                train_loss_pol += train_fn_pol(inputs, labels[:,2:])
+
+                """
                 inputs_1 = inputs[ : inputs.shape[0]/2, :]
                 inputs_2 = inputs[inputs.shape[0]/2 : , :]
 
@@ -178,6 +185,7 @@ if __name__ == '__main__':
 
                 train_loss_span += train_fn_span(inputs_1, labels_1[:,0:2])
                 train_loss_pol += train_fn_pol(inputs_2, labels_2[:,2:])
+                """
 
                 train_batches += 1
 
@@ -191,6 +199,7 @@ if __name__ == '__main__':
 
                 inputs, labels= batch
 
+                """
                 inputs_1 = inputs[ : inputs.shape[0]/2, :]
                 inputs_2 = inputs[inputs.shape[0]/2 : , :]
 
@@ -200,9 +209,12 @@ if __name__ == '__main__':
                 acc_span = val_fn_span(inputs_1, labels_1[:,0:2])
                 val_acc_span += acc_span
 
-
                 acc_pol = val_fn_pol(inputs_2, labels_2[:,2:])
                 val_acc_pol += acc_pol
+                """
+                val_acc_span += val_fn_span(inputs, labels[:,0:2])
+
+                val_acc_pol += val_fn_pol(inputs, labels[:,2:])
 
                 val_batches += 1
 
@@ -265,11 +277,15 @@ if __name__ == '__main__':
 
         window_size = (seqlen-1)/2
 
+        totalPredEventSpans = 0
+        totalCorrEventSpans = 0
+
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
             for fn in file_names:
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+                totalPredEventSpans += len(spans)
 
                 predict_span = pred_fn_span(features)
 
@@ -292,6 +308,7 @@ if __name__ == '__main__':
                     count=0
                     for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
                         if span_label == 1:
+                            totalCorrEventSpans += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                             f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
@@ -318,6 +335,9 @@ if __name__ == '__main__':
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
                 
+
+        print "Total pred event span is %d"%totalPredEventSpans
+        print "Total corr event span is %d"%totalCorrEventSpans
 
         os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 
