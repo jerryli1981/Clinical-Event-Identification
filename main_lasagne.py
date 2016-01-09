@@ -247,7 +247,7 @@ if __name__ == '__main__':
         model_save_path = os.path.join(model_dir,
              'model-'+str(args.minibatch)+'-'+args.optimizer+'-'+str(args.epochs)+'-'+str(args.step)+'-'+str(fileIdx))
 
-        if not os.path.exists(model_save_path):
+        if not os.path.exists(model_save_path+".span"):
             break
         fileIdx += 1
 
