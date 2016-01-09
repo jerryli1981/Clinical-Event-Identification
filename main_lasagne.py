@@ -12,6 +12,8 @@ import cPickle
 
 from scipy.stats import pearsonr
 
+from progressbar import ProgressBar
+
 sys.path.insert(0, os.path.abspath('../Lasagne'))
 
 from lasagne.layers import InputLayer, LSTMLayer, NonlinearityLayer, SliceLayer, FlattenLayer, EmbeddingLayer,\
