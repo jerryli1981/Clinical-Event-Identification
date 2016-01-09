@@ -181,6 +181,8 @@ if __name__ == '__main__':
 
                 train_batches += 1
 
+            pbar.finish()
+
             val_acc_span = 0
             val_acc_pol=0
             val_batches = 0
@@ -223,7 +225,7 @@ if __name__ == '__main__':
                 best_val_acc_pol = val_score_pol
                 save_network(model_save_path+".pol",get_all_param_values(network_pol))
 
-        pbar.finish()
+        
     
     elif args.mode == "test":
 
