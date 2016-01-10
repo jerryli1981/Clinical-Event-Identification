@@ -30,7 +30,7 @@ from lasagne.objectives import categorical_crossentropy, squared_error, categori
 from lasagne.updates import sgd, adagrad, adadelta, nesterov_momentum, rmsprop, adam
 from lasagne.init import GlorotUniform
 
-from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap, generateTestInput
+from utils import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
 def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats, lambda_val = 0.5 * 1e-4):
 
@@ -45,12 +45,10 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     filter_size=wordDim
     pool_size=num_filters
 
-
     input = InputLayer((None, seqlen, num_feats),input_var=input_var)
     batchsize, _, _ = input.input_var.shape
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
-
 
     conv1d_1 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
         nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
@@ -145,8 +143,8 @@ if __name__ == '__main__':
 
         print("Loading training data...")
 
-        X_train, Y_labels_train, seqlen, num_feats,_ = read_sequence_dataset(data_dir, "train")
-        X_dev, Y_labels_dev,_,_,_ = read_sequence_dataset(data_dir, "dev")
+        X_train, Y_labels_train, seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "train")
+        X_dev, Y_labels_dev,_,_ = read_sequence_dataset_onehot(data_dir, "dev")
 
         print "window_size is %d"%((seqlen-1)/2)
 
@@ -247,7 +245,7 @@ if __name__ == '__main__':
 
         print("Loading model...")
         
-        _, _,seqlen, num_feats,_ = read_sequence_dataset(data_dir, "dev")
+        _, _,seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "dev")
         
         train_fn_span, val_fn_span, network_span, train_fn_pol, val_fn_pol, network_pol = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 

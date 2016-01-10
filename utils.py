@@ -173,8 +173,72 @@ def loadWord2VecMap(word2vec_path):
     with open(word2vec_path,'r') as fid:
         return pickle.load(fid)
 
-def read_sequence_dataset(dataset_dir, dataset_name):
+def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
+    a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
+    labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
+
+    with open(a_s) as f:
+        num_feats, window_size = f.readline().strip().split('\t')
+
+    num_feats = int(num_feats)
+    window_size = int(window_size)
+
+    data_size = len([line.rstrip('\n') for line in open(a_s)])
+
+    
+    seqlen = 2*window_size+1
+
+    X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    event_labels = []
+    polarity_labels=[]
+    with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
+        f1.readline()                 
+        for i, (a, ent) in enumerate(zip(f1,f4)):
+
+            a = a.rstrip('\n')
+            label = ent.rstrip('\n')
+
+            el, pl = label.split()
+            event_labels.append(el)
+            polarity_labels.append(pl)
+
+            toks_a = a.split()
+            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
+
+            step = 0
+            for j in range(seqlen):
+
+                for k in range(num_feats):
+                    X[i, j, k] = vocab[toks_a[step+k]]
+
+                step += num_feats
+         
+    #Either targets in [0, 1] matching the layout of predictions, 
+    #or a vector of int giving the correct class index per data point.
+
+    Y_labels = np.zeros((X.shape[0], 5))
+    for i in range(X.shape[0]):
+        Y_labels[i, int(event_labels[i])] = 1
+        Y_labels[i, 2+int(polarity_labels[i])] = 1
+
+    return X, Y_labels, seqlen, num_feats
+
+def read_sequence_dataset_labelIndex(dataset_dir, dataset_name):
 
     a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
     labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
@@ -234,70 +298,10 @@ def read_sequence_dataset(dataset_dir, dataset_name):
     #Either targets in [0, 1] matching the layout of predictions, 
     #or a vector of int giving the correct class index per data point.
 
-    Y_labels = np.zeros((X.shape[0], 5))
-    Y_labels_ = np.zeros((X.shape[0], 2))
+    Y_labels = np.zeros((X.shape[0], 2))
     for i in range(X.shape[0]):
-        Y_labels[i, int(event_labels[i])] = 1
-        Y_labels[i, 2+int(polarity_labels[i])] = 1
-        Y_labels_[i, 0] = int(event_labels[i])
-        Y_labels_[i, 1] = int(polarity_labels[i])
+        Y_labels[i, 0] = int(event_labels[i])
+        Y_labels[i, 1] = int(polarity_labels[i])
 
-    return X, Y_labels, seqlen, num_feats, Y_labels_
-
-if __name__=="__main__":
-
-    import theano
-    import theano.tensor as T
-    import sys
-
-    import scipy.io as sio
-
-    sys.path.insert(0, os.path.abspath('../Lasagne'))
-
-    from lasagne.layers import InputLayer, EmbeddingLayer, get_output,ReshapeLayer
-
-    base_dir = os.path.dirname(os.path.realpath(__file__))
-    data_dir = os.path.join(base_dir, 'data')
-
-    wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings[:100,:]
-
-    vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
-
-    X_train, _, seqlen, num_feats, Y_labels_train = read_sequence_dataset(data_dir, "train")
-
-    X_dev, _, seqlen, num_feats, Y_labels_dev = read_sequence_dataset(data_dir, "dev")
-
-    input_var_train = T.itensor3('inputs_train')
-    l_in_train = InputLayer(X_train.shape)
-    vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
-    emb_train = EmbeddingLayer(l_in_train, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    reshape_train = ReshapeLayer(emb_train, (X_train.shape[0], seqlen*num_feats*wordDim))
-    output_train = get_output(reshape_train, input_var_train)
-    f_train = theano.function([input_var_train], output_train)
-    y_train = f_train(X_train)
-    merge_train = np.concatenate((y_train, Y_labels_train), axis=1)
-
-    input_var_dev = T.itensor3('inputs_dev')
-    l_in_dev = InputLayer(X_dev.shape)
-    vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
-    emb_dev = EmbeddingLayer(l_in_dev, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    reshape_dev = ReshapeLayer(emb_dev, (X_dev.shape[0], seqlen*num_feats*wordDim))
-    output_dev = get_output(reshape_dev, input_var_dev)
-    f_dev = theano.function([input_var_dev], output_dev)
-    y_dev = f_dev(X_dev)
-    merge_dev = np.concatenate((y_dev, Y_labels_dev), axis=1)
-
-    sio.savemat('train.mat', {'train':merge_train})
-    sio.savemat('dev.mat', {'dev':merge_dev})
-
-
-
-
-
-
-
+    return X, Y_labels, seqlen, num_feats
 

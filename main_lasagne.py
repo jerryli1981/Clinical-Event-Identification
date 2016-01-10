@@ -29,7 +29,7 @@ from lasagne.objectives import categorical_crossentropy, squared_error, categori
 from lasagne.updates import sgd, adagrad, adadelta, nesterov_momentum, rmsprop, adam
 from lasagne.init import GlorotUniform
 
-from utils import read_sequence_dataset, iterate_minibatches_,loadWord2VecMap, generateTestInput
+from utils import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
 def event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
 
@@ -231,7 +231,6 @@ if __name__ == '__main__':
     parser.add_argument("--mode",dest="mode",type=str,default='train')
     args = parser.parse_args()
 
-
     # Load the dataset
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
@@ -265,8 +264,8 @@ if __name__ == '__main__':
 
         print("Loading training data...")
 
-        X_train, Y_labels_train, seqlen, num_feats,_ = read_sequence_dataset(data_dir, "train")
-        X_dev, Y_labels_dev,_,_,_ = read_sequence_dataset(data_dir, "dev")
+        X_train, Y_labels_train, seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "train")
+        X_dev, Y_labels_dev,_,_ = read_sequence_dataset_onehot(data_dir, "dev")
 
         print "window_size is %d"%((seqlen-1)/2)
 
@@ -352,7 +351,7 @@ if __name__ == '__main__':
 
         print("Loading model...")
         
-        _, _,seqlen, num_feats,_ = read_sequence_dataset(data_dir, "dev")
+        _, _,seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "dev")
         
         _, _, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
