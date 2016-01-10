@@ -38,7 +38,7 @@ if __name__=="__main__":
     dataset_train = np.concatenate((feats_train, Y_train), axis=1)
 
     sio.savemat('train.mat', {'train':dataset_train})
-    octave.train_libsvm()
+    octave.train_svm()
 
     input_var_dev = T.itensor3('inputs_dev')
     l_in_dev = InputLayer(X_dev.shape)
@@ -53,64 +53,64 @@ if __name__=="__main__":
 
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
-            for fn in file_names:
-                #print fn
-                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
-                totalPredEventSpans += len(spans)
+        for fn in file_names:
+            #print fn
+            spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+            totalPredEventSpans += len(spans)
 
-                feats_dev = f_dev(features)
-                sio.savemat('dev.mat', {'dev':feats_dev})
-                predict_span = octave.predict_libsvm()
+            feats_dev = f_dev(features)
+            sio.savemat('dev.mat', {'dev':feats_dev})
+            predict_span = octave.test_svm()
 
-                dn = os.path.join(output_dir, fn)
-                if not os.path.exists(dn):
-                    os.makedirs(dn)
+            dn = os.path.join(output_dir, fn)
+            if not os.path.exists(dn):
+                os.makedirs(dn)
 
-                outputAnn_path = os.path.join(dn, fn+"."+"Temporal-Relation.system.complete.xml")
-                with open(outputAnn_path, 'w') as f:
-                    f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\n")
-                    f.write("<data>\n")
-                    f.write("<info>\n")
-                    f.write("  <savetime>"+datetime.now().strftime('%H:%M:%S %d-%m-%Y')+"</savetime>\n")
-                    f.write("  <progress>completed</progress>\n")
-                    f.write("</info>"+"\n\n\n")
-                    f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
-                    f.write("<annotations>\n\n\n")
-                    count=0
-                    for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
-                        if span_label == 1:
-                            totalCorrEventSpans += 1
-                            f.write("\t<entity>\n")
-                            f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                            f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
-                            f.write("\t\t<type>EVENT</type>\n")
-                            f.write("\t\t<parentsType></parentsType>\n")
-                            f.write("\t\t<properties>\n")
-                            f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
-                            f.write("\t\t\t<Type>N/A</Type>\n")
-                            f.write("\t\t\t<Degree>N/A</Degree>\n")
-                            
-                            if pol_label == 1:
-                                f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                            elif pol_label == 2:
-                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            else:
-                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            
-                            f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
-                            f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
-                            f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
-                            f.write("\t\t</properties>\n")
-                            f.write("\t</entity>\n\n")
-                            count += 1
-                    f.write("\n\n</annotations>\n")
-                    f.write("</data>")
+            outputAnn_path = os.path.join(dn, fn+"."+"Temporal-Relation.system.complete.xml")
+            with open(outputAnn_path, 'w') as f:
+                f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\n")
+                f.write("<data>\n")
+                f.write("<info>\n")
+                f.write("  <savetime>"+datetime.now().strftime('%H:%M:%S %d-%m-%Y')+"</savetime>\n")
+                f.write("  <progress>completed</progress>\n")
+                f.write("</info>"+"\n\n\n")
+                f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
+                f.write("<annotations>\n\n\n")
+                count=0
+                for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                    if span_label == 1:
+                        totalCorrEventSpans += 1
+                        f.write("\t<entity>\n")
+                        f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
+                        f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                        f.write("\t\t<type>EVENT</type>\n")
+                        f.write("\t\t<parentsType></parentsType>\n")
+                        f.write("\t\t<properties>\n")
+                        f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
+                        f.write("\t\t\t<Type>N/A</Type>\n")
+                        f.write("\t\t\t<Degree>N/A</Degree>\n")
+                        
+                        if pol_label == 1:
+                            f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
+                        elif pol_label == 2:
+                            f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                        else:
+                            f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                        
+                        f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
+                        f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
+                        f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
+                        f.write("\t\t</properties>\n")
+                        f.write("\t</entity>\n\n")
+                        count += 1
+                f.write("\n\n</annotations>\n")
+                f.write("</data>")
                 
 
-        print "Total pred event span is %d"%totalPredEventSpans
-        print "Total corr event span is %d"%totalCorrEventSpans
+    print "Total pred event span is %d"%totalPredEventSpans
+    print "Total corr event span is %d"%totalCorrEventSpans
 
-        os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
+    os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 
 
 
