@@ -5,11 +5,11 @@ import scipy.io as sio
 import numpy as np
 from utils import read_sequence_dataset_labelIndex, loadWord2VecMap
 
+from oct2py import octave
+
 sys.path.insert(0, os.path.abspath('../Lasagne'))
 
 from lasagne.layers import InputLayer, EmbeddingLayer, get_output,ReshapeLayer
-
-from sklearn import svm
 
 if __name__=="__main__":
 
@@ -37,6 +37,9 @@ if __name__=="__main__":
     labels_train = np.reshape(Y_train[:, :1], (X_train.shape[0],))
     dataset_train = np.concatenate((feats_train, Y_train), axis=1)
 
+    sio.savemat('train.mat', {'train':dataset_train})
+    octave.train_libsvm()
+
     input_var_dev = T.itensor3('inputs_dev')
     l_in_dev = InputLayer(X_dev.shape)
     vocab_size = wordEmbeddings.shape[1]
@@ -45,21 +48,71 @@ if __name__=="__main__":
     reshape_dev = ReshapeLayer(emb_dev, (X_dev.shape[0], seqlen*num_feats*wordDim))
     output_dev = get_output(reshape_dev, input_var_dev)
     f_dev = theano.function([input_var_dev], output_dev)
-    feats_dev = f_dev(X_dev)
-    labels_dev = np.reshape(Y_dev[:, :1], (X_dev.shape[0],))
-    dataset_dev = np.concatenate((feats_dev, Y_dev), axis=1)
     
-    """
-    from sklearn import neighbors, svm
-    clf = neighbors.KNeighborsClassifier(n_neighbors=2)
-    clf = svm.SVC()
-    clf.fit(feats_train, labels_train)
-    print clf.score(feats_dev, labels_dev)
+    input_text_test_dir = os.path.join(plain_dir, "test")
 
-    """
+    for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
-    sio.savemat('train.mat', {'train':dataset_train})
-    sio.savemat('dev.mat', {'dev':dataset_dev})
+            for fn in file_names:
+                #print fn
+                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+                totalPredEventSpans += len(spans)
+
+                feats_dev = f_dev(features)
+                sio.savemat('dev.mat', {'dev':feats_dev})
+                predict_span = octave.predict_libsvm()
+
+                dn = os.path.join(output_dir, fn)
+                if not os.path.exists(dn):
+                    os.makedirs(dn)
+
+                outputAnn_path = os.path.join(dn, fn+"."+"Temporal-Relation.system.complete.xml")
+                with open(outputAnn_path, 'w') as f:
+                    f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\n")
+                    f.write("<data>\n")
+                    f.write("<info>\n")
+                    f.write("  <savetime>"+datetime.now().strftime('%H:%M:%S %d-%m-%Y')+"</savetime>\n")
+                    f.write("  <progress>completed</progress>\n")
+                    f.write("</info>"+"\n\n\n")
+                    f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
+                    f.write("<annotations>\n\n\n")
+                    count=0
+                    for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                        if span_label == 1:
+                            totalCorrEventSpans += 1
+                            f.write("\t<entity>\n")
+                            f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
+                            f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                            f.write("\t\t<type>EVENT</type>\n")
+                            f.write("\t\t<parentsType></parentsType>\n")
+                            f.write("\t\t<properties>\n")
+                            f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
+                            f.write("\t\t\t<Type>N/A</Type>\n")
+                            f.write("\t\t\t<Degree>N/A</Degree>\n")
+                            
+                            if pol_label == 1:
+                                f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
+                            elif pol_label == 2:
+                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                            else:
+                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                            
+                            f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
+                            f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
+                            f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
+                            f.write("\t\t</properties>\n")
+                            f.write("\t</entity>\n\n")
+                            count += 1
+                    f.write("\n\n</annotations>\n")
+                    f.write("</data>")
+                
+
+        print "Total pred event span is %d"%totalPredEventSpans
+        print "Total corr event span is %d"%totalCorrEventSpans
+
+        os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
+
+
 
 
 
