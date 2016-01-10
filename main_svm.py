@@ -47,7 +47,7 @@ if __name__=="__main__":
     f_dev = theano.function([input_var_dev], output_dev)
     feats_dev = f_dev(X_dev)
     labels_dev = np.reshape(Y_dev[:, :1], (X_dev.shape[0],))
-    dataset_dev = np.concatenate(feats_dev, Y_dev), axis=1)
+    dataset_dev = np.concatenate((feats_dev, Y_dev), axis=1)
 
 	"""
     from sklearn import neighbors, svm
