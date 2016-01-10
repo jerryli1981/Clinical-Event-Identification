@@ -37,7 +37,7 @@ if __name__=="__main__":
     labels_train = np.reshape(Y_train[:, :1], (X_train.shape[0],))
     dataset_train = np.concatenate((feats_train, Y_train), axis=1)
 
-    sio.savemat('train.mat', {'train':dataset_train})
+    sio.savemat('train.mat', {'train_data':dataset_train})
     octave.train_svm()
 
     input_var_dev = T.itensor3('inputs_dev')
@@ -48,6 +48,10 @@ if __name__=="__main__":
     reshape_dev = ReshapeLayer(emb_dev, (X_dev.shape[0], seqlen*num_feats*wordDim))
     output_dev = get_output(reshape_dev, input_var_dev)
     f_dev = theano.function([input_var_dev], output_dev)
+
+    ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
+    plain_dir = os.path.join(base_dir, 'original')
+    output_dir = os.path.join(base_dir, 'uta-output')
     
     input_text_test_dir = os.path.join(plain_dir, "test")
 
