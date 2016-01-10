@@ -48,17 +48,18 @@ if __name__=="__main__":
     feats_dev = f_dev(X_dev)
     labels_dev = np.reshape(Y_dev[:, :1], (X_dev.shape[0],))
     dataset_dev = np.concatenate((feats_dev, Y_dev), axis=1)
-
-	"""
+    
+    """
     from sklearn import neighbors, svm
-    #clf = neighbors.KNeighborsClassifier(n_neighbors=2)
+    clf = neighbors.KNeighborsClassifier(n_neighbors=2)
     clf = svm.SVC()
     clf.fit(feats_train, labels_train)
     print clf.score(feats_dev, labels_dev)
+
     """
 
     sio.savemat('train.mat', {'train':dataset_train})
-    sio.savemat('dev.mat', {'dev':merge_dev})
+    sio.savemat('dev.mat', {'dev':dataset_dev})
 
 
 
