@@ -3,6 +3,7 @@ import theano.tensor as T
 import sys,os
 import scipy.io as sio
 import numpy as np
+import time
 from utils import read_sequence_dataset_labelIndex, loadWord2VecMap,generateTestInput
 
 from datetime import datetime
@@ -132,7 +133,7 @@ if __name__=="__main__":
                 f.write("</data>")
                 
         pbar.finish()
-        
+
     print "Total pred event span is %d"%totalPredEventSpans
     print "Total corr event span is %d"%totalCorrEventSpans
 
