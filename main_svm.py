@@ -43,9 +43,9 @@ if __name__=="__main__":
     dataset_train = np.concatenate((feats_train, Y_train), axis=1)
 
     sio.savemat('train.mat', {'train_data':dataset_train})
-    print 'begin to train svm'
+    print 'Begin to train svm'
     octave.train_svm()
-    print 'training is done'
+    
 
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
     plain_dir = os.path.join(base_dir, 'original')
@@ -57,6 +57,8 @@ if __name__=="__main__":
 
     totalPredEventSpans = 0
     totalCorrEventSpans = 0
+
+    print 'Begin to testing'
 
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
