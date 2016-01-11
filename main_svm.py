@@ -74,7 +74,7 @@ if __name__=="__main__":
             sio.savemat('dev.mat', {'dev':feats_dev})
             print 'begin to test'
             predict_span = octave.test_svm()
-            predict_span = np.reshape(predict_span, (feats_dev.shape[0],))
+            predict_span = np.reshape(predict_span, (feats_dev.shape[0],)).astype(int)
             print 'test is done'
             predict_pol = predict_span
 
