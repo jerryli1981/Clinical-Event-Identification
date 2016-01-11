@@ -22,10 +22,10 @@ if __name__=="__main__":
     data_dir = os.path.join(base_dir, 'data')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings[:10,:]
+    wordDim = 20
+    wordEmbeddings = wordEmbeddings[:wordDim,:]
 
     vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
 
     X_train, Y_train, seqlen, num_feats  = read_sequence_dataset_labelIndex(data_dir, "train")
     X_dev, Y_dev, _, _  = read_sequence_dataset_labelIndex(data_dir, "dev")
@@ -44,7 +44,7 @@ if __name__=="__main__":
 
     sio.savemat('train.mat', {'train_data':dataset_train})
     print 'Begin to train svm'
-    octave.train_svm()
+    octave.train_svm(seqlen*num_feats*wordDim)
     
     print 'Begin to testing'
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
@@ -83,7 +83,7 @@ if __name__=="__main__":
             feats_dev = f_dev(features)
             sio.savemat('dev.mat', {'dev':feats_dev})
             #print 'begin to test'
-            predict_span = octave.test_svm()
+            predict_span = octave.test_svm(seqlen*num_feats*wordDim)
             predict_span = np.reshape(predict_span, (feats_dev.shape[0],)).astype(int)
             #print 'test is done'
             predict_pol = predict_span

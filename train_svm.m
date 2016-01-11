@@ -1,4 +1,4 @@
-function model = train_svm()
+function model = train_svm(featLength)
 
 addpath(genpath('~/Downloads/liblinear-2.1'))
 %addpath(genpath('~/Research/liblinear-1.96'));
@@ -10,8 +10,8 @@ load(filename);
 %filename = '/devData/lipeng/dev.mat';
 %load(filename);
 
-X_train = train_data(:,1:100);
-Y_train = train_data(:,101:102);
+X_train = train_data(:,1:featLength);
+Y_train = train_data(:,featLength+1:featLength+2);
 %X_test = dev(:,1:100);
 %Y_test = dev(:,101:102);
 

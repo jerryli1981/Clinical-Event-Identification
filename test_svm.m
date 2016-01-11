@@ -1,4 +1,4 @@
-function predict_label = test_svm()
+function predict_label = test_svm(featLength)
 
 addpath(genpath('~/Downloads/liblinear-2.1'))
 %addpath(genpath('~/Research/liblinear-1.96'));
@@ -7,17 +7,16 @@ addpath(genpath('~/Downloads/liblinear-2.1'))
 % input 
 filename = 'train.mat';
 load(filename);
-filename = './dev.mat';
+filename = 'dev.mat';
 load(filename);
 
-X_train = train_data(:,1:100);
-Y_train = train_data(:,101:102);
-X_test = dev(:,1:100);
+%X_train = train_data(:,1:featLength);
+%Y_train = train_data(:,featLength+1:featLength+2);
+X_test = dev(:,1:featLength);
 %Y_test = dev(:,101:102);
 
-
 for i = 1:1
-train_label = Y_train(:,i);
+%train_label = Y_train(:,i);
 % test_label = Y_test(:,i);
 
 %sc = 1e0
