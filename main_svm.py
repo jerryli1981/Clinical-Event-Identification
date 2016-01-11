@@ -9,6 +9,8 @@ from datetime import datetime
 
 from oct2py import octave
 
+from progressbar import ProgressBar
+
 sys.path.insert(0, os.path.abspath('../Lasagne'))
 
 from lasagne.layers import InputLayer, EmbeddingLayer, get_output,ReshapeLayer
@@ -57,8 +59,15 @@ if __name__=="__main__":
 
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
-        for fn in file_names:
-            print fn
+        maxlen = len(file_names)
+
+        pbar = ProgressBar(maxval=maxlen).start()
+
+        for i, fn in enumerate(file_names):
+
+            time.sleep(0.01)
+            pbar.update(i + 1)
+            #print fn
             spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
             totalPredEventSpans += len(spans)
 
@@ -72,10 +81,10 @@ if __name__=="__main__":
             f_dev = theano.function([input_var_dev], output_dev)
             feats_dev = f_dev(features)
             sio.savemat('dev.mat', {'dev':feats_dev})
-            print 'begin to test'
+            #print 'begin to test'
             predict_span = octave.test_svm()
             predict_span = np.reshape(predict_span, (feats_dev.shape[0],)).astype(int)
-            print 'test is done'
+            #print 'test is done'
             predict_pol = predict_span
 
             dn = os.path.join(output_dir, fn)
@@ -122,7 +131,8 @@ if __name__=="__main__":
                 f.write("\n\n</annotations>\n")
                 f.write("</data>")
                 
-
+        pbar.finish()
+        
     print "Total pred event span is %d"%totalPredEventSpans
     print "Total corr event span is %d"%totalCorrEventSpans
 
