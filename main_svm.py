@@ -33,7 +33,6 @@ if __name__=="__main__":
     input_var_train = T.itensor3('inputs_train')
     l_in_train = InputLayer(X_train.shape)
     vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
     emb_train = EmbeddingLayer(l_in_train, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape_train = ReshapeLayer(emb_train, (X_train.shape[0], seqlen*num_feats*wordDim))
     output_train = get_output(reshape_train, input_var_train)
@@ -74,18 +73,14 @@ if __name__=="__main__":
 
             input_var_dev = T.itensor3()
             l_in_dev = InputLayer(features.shape)
-            vocab_size = wordEmbeddings.shape[1]
-            wordDim = wordEmbeddings.shape[0]
             emb_dev = EmbeddingLayer(l_in_dev, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
             reshape_dev = ReshapeLayer(emb_dev, (features.shape[0], seqlen*num_feats*wordDim))
             output_dev = get_output(reshape_dev, input_var_dev)
             f_dev = theano.function([input_var_dev], output_dev)
             feats_dev = f_dev(features)
             sio.savemat('dev.mat', {'dev':feats_dev})
-            #print 'begin to test'
             predict_span = octave.test_svm(seqlen*num_feats*wordDim)
             predict_span = np.reshape(predict_span, (feats_dev.shape[0],)).astype(int)
-            #print 'test is done'
             predict_pol = predict_span
 
             dn = os.path.join(output_dir, fn)
