@@ -55,6 +55,11 @@ if __name__=="__main__":
     
     input_text_test_dir = os.path.join(plain_dir, "test")
 
+    window_size = (seqlen-1)/2
+
+    totalPredEventSpans = 0
+    totalCorrEventSpans = 0
+
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
         for fn in file_names:
