@@ -70,7 +70,9 @@ if __name__=="__main__":
             f_dev = theano.function([input_var_dev], output_dev)
             feats_dev = f_dev(features)
             sio.savemat('dev.mat', {'dev':feats_dev})
+            print 'begin to test'
             predict_span = octave.test_svm()
+            print 'test is done'
 
             dn = os.path.join(output_dir, fn)
             if not os.path.exists(dn):
