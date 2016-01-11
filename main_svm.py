@@ -40,15 +40,6 @@ if __name__=="__main__":
     sio.savemat('train.mat', {'train_data':dataset_train})
     octave.train_svm()
 
-    input_var_dev = T.itensor3('inputs_dev')
-    l_in_dev = InputLayer(X_dev.shape)
-    vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
-    emb_dev = EmbeddingLayer(l_in_dev, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    reshape_dev = ReshapeLayer(emb_dev, (X_dev.shape[0], seqlen*num_feats*wordDim))
-    output_dev = get_output(reshape_dev, input_var_dev)
-    f_dev = theano.function([input_var_dev], output_dev)
-
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
     plain_dir = os.path.join(base_dir, 'original')
     output_dir = os.path.join(base_dir, 'uta-output')
@@ -67,6 +58,14 @@ if __name__=="__main__":
             spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
             totalPredEventSpans += len(spans)
 
+            input_var_dev = T.itensor3()
+            l_in_dev = InputLayer(features.shape)
+            vocab_size = wordEmbeddings.shape[1]
+            wordDim = wordEmbeddings.shape[0]
+            emb_dev = EmbeddingLayer(l_in_dev, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
+            reshape_dev = ReshapeLayer(emb_dev, (features.shape[0], seqlen*num_feats*wordDim))
+            output_dev = get_output(reshape_dev, input_var_dev)
+            f_dev = theano.function([input_var_dev], output_dev)
             feats_dev = f_dev(features)
             sio.savemat('dev.mat', {'dev':feats_dev})
             predict_span = octave.test_svm()
