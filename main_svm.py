@@ -3,7 +3,7 @@ import theano.tensor as T
 import sys,os
 import scipy.io as sio
 import numpy as np
-from utils import read_sequence_dataset_labelIndex, loadWord2VecMap
+from utils import read_sequence_dataset_labelIndex, loadWord2VecMap,generateTestInput
 
 from oct2py import octave
 
