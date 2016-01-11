@@ -46,7 +46,7 @@ if __name__=="__main__":
     print 'Begin to train svm'
     octave.train_svm()
     
-
+    print 'Begin to testing'
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
     plain_dir = os.path.join(base_dir, 'original')
     output_dir = os.path.join(base_dir, 'uta-output')
@@ -57,8 +57,6 @@ if __name__=="__main__":
 
     totalPredEventSpans = 0
     totalCorrEventSpans = 0
-
-    print 'Begin to testing'
 
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
