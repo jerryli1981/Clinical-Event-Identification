@@ -5,6 +5,8 @@ import scipy.io as sio
 import numpy as np
 from utils import read_sequence_dataset_labelIndex, loadWord2VecMap,generateTestInput
 
+from datetime import datetime
+
 from oct2py import octave
 
 sys.path.insert(0, os.path.abspath('../Lasagne'))
