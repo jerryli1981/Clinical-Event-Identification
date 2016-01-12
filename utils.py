@@ -1,76 +1,150 @@
 import numpy as np
-import os
-
+import os,sys
 import re
 import nltk
 import anafora
+import cPickle as pickle
 
 from nltk.tag.perceptron import PerceptronTagger
+from nltk.tokenize.util import regexp_span_tokenize
+from nltk.tokenize import regexp_tokenize, WhitespaceTokenizer
+
+from random import shuffle
+
 tagger = PerceptronTagger()
 
 Polarity = {"POS":"1", "NEG":"2"}
 
-def feature_extraction(content, window_size, num_feats=2):
+def make_dirs(dirs):
+    for d in dirs:
+        if not os.path.exists(d):
+            os.makedirs(d)
 
-    sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
-    sequence = re.sub("\\s{2,}", " ", sequence)
-    toks = sequence.split(" ")
+def build_vocab(filepaths, dst_path, lowercase=True):
+    vocab = set()
+    for filepath in filepaths:
+        with open(filepath) as f:
+            for line in f:
+                if lowercase:
+                    line = line.lower()
+                vocab |= set(line.split())
+    with open(dst_path, 'w') as f:
+        for w in sorted(vocab):
+            f.write(w + '\n')
 
-    spans = []
-    features = []
+def build_word2Vector(glove_path, data_dir, vocab_name):
 
-    start_index = 0
+    print "building word2vec"
+    from collections import defaultdict
+    import numpy as np
+    words = defaultdict(int)
 
-    for i in range(window_size):
-        features.append("NN UNK")
+    vocab_path = os.path.join(data_dir, vocab_name)
 
-    for tok in toks:
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
 
-        if not re.match(r'\w+', tok):
-            continue
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
 
-        tok_tag = nltk.tag._pos_tag([tok], None, tagger)
+    print "word size", len(words)
+    print "vocab size", len(vocab)
 
-        pos = tok_tag[0][1]
+    word_embedding_matrix = np.zeros(shape=(300, len(vocab)))  
 
-        start_index = content.find(tok, start_index)
-        if start_index == -1:
-            raise "tok not in the original content"
-  
-        spans.append((start_index,start_index+len(tok)))
+    import gzip
+    wordSet = defaultdict(int)
+
+    with open(glove_path, "rb") as f:
+        for line in f:
+           toks = line.split(' ')
+           word = toks[0]
+           if word in vocab:
+                wordIdx = vocab[word]
+                word_embedding_matrix[:,wordIdx] = np.fromiter(toks[1:], dtype='float32')
+                wordSet[word] +=1
+    
+    count = 0   
+    for word in vocab:
+        if word not in wordSet:
+            wordIdx = vocab[word]
+            count += 1
+            word_embedding_matrix[:,wordIdx] = np.random.uniform(-0.05,0.05, 300) 
+    
+    print "Number of words not in glove ", count
+    
+    with open(os.path.join(data_dir, 'word2vec.bin'),'w') as fid:
+        pickle.dump(word_embedding_matrix,fid)
+
+def iterate_minibatches_(inputs, batchsize, shuffle=False):
+
+    if shuffle:
+        indices = np.arange(len(inputs[0]))
+        np.random.shuffle(indices)
+    for start_idx in range(0, len(inputs[0]) - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield ( input[excerpt] for input in inputs )
+
+def loadWord2VecMap(word2vec_path):
+    with open(word2vec_path,'r') as fid:
+        return pickle.load(fid)
+
+
+def feature_generation(content, startoffset, endoffset, window_size=3, num_feats=2):
+
+    pre_content = content[0:startoffset-1]
+    post_content=content[endoffset+1:]
+
+    pre_list = regexp_tokenize(pre_content, pattern='[\w\/]+')
+    if len(pre_list) < window_size:
+        for i in range(window_size-len(pre_list)):
+            pre_list.insert(i, "UNK")
+
+    post_list = regexp_tokenize(post_content, pattern='[\w\/]+')
+    if len(post_list) < window_size:
+        for i in range(window_size-len(post_list)):
+            post_list.insert(i, "UNK")
+
+    features=[]
+    for tok in pre_list[-window_size:]:
+
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+
         features.append(pos+" "+tok)
 
-    for i in range(window_size):
-        features.append("NN UNK")
+    central_word = content[startoffset:endoffset]
+    central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
+    features.append(central_pos+" "+central_word)
 
-    context_feats = []
+    for tok in post_list[0:window_size]:
 
-    for i in range(window_size, len(features)-window_size):
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
 
-        c_ft = []
-        for j in reversed(range(window_size)):
-            c_ft.append(features[i-j-1])
-        c_ft.append(features[i])
-        for j in range(window_size):
-            c_ft.append(features[i+j+1])
+        features.append(pos+" "+tok)
 
-        context_feat = " ".join(c_ft)
- 
-        context_feats.append(context_feat)
+    return " ".join(features)
 
-    assert len(spans) == len(context_feats), "size is wrong"
+def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
-    return spans, context_feats
-
-
-def preprocess_data(input_ann_dir, input_text_dir, outfn, window_size=3, num_feats=2):
-
-    total=0
     positive = 0
+    mypositive = 0
+    negative=0
 
-    with open(outfn, 'w') as tr:
+    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
+        open(os.path.join(outDir, "label.txt"), 'w') as g_label:
 
-        tr.write(str(num_feats)+"\t"+str(window_size)+"\n")
+        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
 
         for sub_dir, text_name, xml_names in anafora.walk(input_ann_dir):
 
@@ -88,10 +162,23 @@ def preprocess_data(input_ann_dir, input_text_dir, outfn, window_size=3, num_fea
                     xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
                     data = anafora.AnaforaData.from_file(xml_path)
                     span_property_map = dict()
+
+                    content = f.read()
+                    positive_spans=[]
+                    positive_feats=[]
+                    positive_labels=[]
+                    positive_span_feat_map={}
                     for annotation in data.annotations:
                         if annotation.type == 'EVENT':
+                            positive +=1
                             startoffset = annotation.spans[0][0]
                             endoffset = annotation.spans[0][1]
+                            if " " in content[startoffset:endoffset]:
+                                continue
+                                
+                            mypositive += 1
+
+                            feats = feature_generation(content, startoffset, endoffset, window_size, num_feats)
                             properties = annotation.properties
                             pros = {}
                             for pro_name in properties:
@@ -99,26 +186,51 @@ def preprocess_data(input_ann_dir, input_text_dir, outfn, window_size=3, num_fea
                                 pros[pro_name] = pro_val
 
                             span_property_map[(startoffset,endoffset)] = pros
-                            
-                
-                    spans, features = feature_extraction(f.read(), window_size, num_feats)
-                   
-                    for feat, span in zip(features, spans):
-                        total += 1
-                        if span in span_property_map:
-                            event = "1"
-                            positive +=1
-                            polarity = Polarity[span_property_map[span]["Polarity"]]
-                        else:
-                            event = "0"
-                            polarity = "0"
+                            positive_spans.append((startoffset,endoffset))
+                            positive_feats.append(feats)
+                            pol_label = Polarity[pros["Polarity"]]
+                            positive_labels.append("1"+" "+pol_label)
 
-                        tr.write(feat + "\t" + event+ " "+ polarity+"\n")
-                    
+                            positive_span_feat_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" "+pol_label
 
-    print "Total events is %d"%total
-    print "Positive events is %d"%positive
+                    all_spans = set()
+                    all_toks = regexp_tokenize(content, pattern='[\w\/]+')
 
+                    for tok in all_toks:
+                        start_index = content.find(tok)
+                        all_spans.add((start_index,start_index+len(tok)))
+
+                    negative_spans=[]
+                    negative_feats=[]
+                    negative_labels=[]
+                    negative_span_feat_map={}
+                    for span in all_spans:
+                        if span not in span_property_map:
+                            negative += 1
+                            negative_spans.append(span)
+                            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
+                            negative_feats.append(feats)
+                            negative_labels.append("0"+" "+"0")
+                            negative_span_feat_map[span] = feats+"\t"+"0 0"
+
+                    merged_spans = positive_spans+negative_spans
+                    shuffle(merged_spans)
+
+                    for span in merged_spans:
+                        if span in positive_span_feat_map:
+                            feat, lab = positive_span_feat_map[span].split("\t")
+                        elif span in negative_span_feat_map:
+                            feat, lab = negative_span_feat_map[span].split("\t")
+
+                        g_feature.write(feat+"\n")
+                        g_label.write(lab+"\n")
+
+        print "Positive events is %d"%positive
+        print "My positive events is %d"%mypositive
+        print "Negative events is %d"%negative
+
+
+# this method need keep for submit results
 def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
     from collections import defaultdict
@@ -137,7 +249,23 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
     seqlen = 2*window_size+1
     with open(os.path.join(test_dir, fn), 'r') as f:
 
-        Spans, Features = feature_extraction(f.read(), window_size, num_feats)
+        #Spans, Features = feature_extraction_enhanced(f.read(), window_size, num_feats)
+
+        content = f.read()
+
+        all_spans = set()
+        all_toks = regexp_tokenize(content, pattern='[\w\/]+')
+
+        for tok in all_toks:
+            start_index = content.find(tok)
+            all_spans.add((start_index,start_index+len(tok)))
+
+        Spans = []
+        Features = []
+        for span in all_spans:
+            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
+            Spans.append(span)
+            Features.append(feats)
 
         X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
 
@@ -155,24 +283,6 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         return Spans, X
 
 
-def iterate_minibatches_(inputs, batchsize, shuffle=False):
-
-    if shuffle:
-        indices = np.arange(len(inputs[0]))
-        np.random.shuffle(indices)
-    for start_idx in range(0, len(inputs[0]) - batchsize + 1, batchsize):
-        if shuffle:
-            excerpt = indices[start_idx:start_idx + batchsize]
-        else:
-            excerpt = slice(start_idx, start_idx + batchsize)
-        yield ( input[excerpt] for input in inputs )
-
-def loadWord2VecMap(word2vec_path):
-    import cPickle as pickle
-    
-    with open(word2vec_path,'r') as fid:
-        return pickle.load(fid)
-
 def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
@@ -186,7 +296,6 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     data_size = len([line.rstrip('\n') for line in open(a_s)])
 
-    
     seqlen = 2*window_size+1
 
     X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
@@ -228,9 +337,6 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    #Either targets in [0, 1] matching the layout of predictions, 
-    #or a vector of int giving the correct class index per data point.
-
     Y_labels = np.zeros((X.shape[0], 5))
     for i in range(X.shape[0]):
         Y_labels[i, int(event_labels[i])] = 1
@@ -269,8 +375,6 @@ def read_sequence_dataset_labelIndex(dataset_dir, dataset_name):
     for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
-
-    
     event_labels = []
     polarity_labels=[]
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
