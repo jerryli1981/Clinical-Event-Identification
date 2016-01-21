@@ -335,12 +335,9 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
         f1.readline()                 
-        for i, (a, ent) in enumerate(zip(f1,f4)):
+        for i, (a, label) in enumerate(zip(f1,f4)):
 
-            a = a.rstrip('\n')
-            label = ent.rstrip('\n')
-
-            l0, l1, l2, l3, l4, l5, l6, l7 = label.split()
+            l0, l1, l2, l3, l4, l5, l6, l7 = label.rstrip('\n').split()
             Event_label.append(l0)
             DocTimeRel_label.append(l1)
             Type_label.append(l2)
@@ -350,7 +347,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
             ContextualAspect_label.append(l6)
             Permanence_label.append(l7)
 
-            toks_a = a.split()
+            toks_a = a.rstrip('\n').split()
             assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
 
             step = 0
@@ -366,12 +363,12 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
         Y_labels[i, int(Event_label[i])] = 1
         Y_labels[i, 2+int(DocTimeRel_label[i])] = 1
-        Y_labels[i, len(DocTimeRel) + int(Type_label[i])] = 1
-        Y_labels[i, len(Type) + int(Degree_label[i])] = 1
-        Y_labels[i, len(Degree) + int(Polarity_label[i])] = 1
-        Y_labels[i, len(Polarity) + int(ContextualModality_label[i])] = 1
-        Y_labels[i, len(ContextualModality) + int(ContextualAspect_label[i])] = 1
-        Y_labels[i, len(ContextualAspect) + int(Permanence_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + int(Type_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + int(Degree_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + int(Polarity_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + int(ContextualAspect_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + len(ContextualAspect) + int(Permanence_label[i])] = 1
 
     assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 24, "length error"
 
