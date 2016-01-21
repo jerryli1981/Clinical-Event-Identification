@@ -147,7 +147,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     updates_5 = adagrad(loss_5, get_all_params(network_5, trainable=True), learning_rate=args.step)
     train_fn_5 = theano.function([input_var, target_var], 
         loss_5, updates=updates_5, allow_input_downcast=True)
-    val_acc_5 =  T.mean(categorical_accuracy(get_output(network_5, deterministic=True), target_var))
+    val_acc_5 =  T.mean(binary_accuracy(get_output(network_5, deterministic=True), target_var))
     val_fn_5 = theano.function([input_var, target_var], val_acc_5, allow_input_downcast=True)
 
     loss_6 = T.mean(categorical_crossentropy(network_6_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_6:lambda_val, 
