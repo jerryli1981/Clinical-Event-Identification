@@ -280,8 +280,8 @@ if __name__ == '__main__':
                 train_loss_degree += train_fn_degree(inputs, labels[:,9:12])
                 train_loss_pol += train_fn_pol(inputs, labels[:,12:14])
                 train_loss_cm += train_fn_cm(inputs, labels[:,14:18])
-                train_loss_ca += train_fn_ca(inputs, labels[: 18:21])
-                train_loss_per += train_fn_per(inputs, labels[:, 21:24])
+                train_loss_ca += train_fn_ca(inputs, labels[:,18:21])
+                train_loss_per += train_fn_per(inputs, labels[:,21:24])
 
                 train_batches += 1
 
