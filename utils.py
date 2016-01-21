@@ -13,13 +13,13 @@ from random import shuffle
 
 tagger = PerceptronTagger()
 
-DocTimeRel = {"BEFORE":"1", "OVERLAP":"2", "AFTER":"3", "BEFORE/OVERLAP":"4"}
-Type={"N/A":"1", "ASPECTUAL":"2", "EVIDENTIAL":"3"}
-Degree = {"N/A":"1", "MOST":"2", "LITTLE":"3"}
-Polarity = {"POS":"1", "NEG":"2"}
-ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":"4"}
-ContextualAspect = {"N/A":"1", "NOVEL":"2", "INTERMITTENT":"3"}
-Permanence = {"UNDETERMINED":"1", "FINITE":"2", "PERMANENT":"3"}
+DocTimeRel = {"BEFORE":"0", "OVERLAP":"1", "AFTER":"2", "BEFORE/OVERLAP":"3"}
+Type={"N/A":"0", "ASPECTUAL":"1", "EVIDENTIAL":"2"}
+Degree = {"N/A":"0", "MOST":"1", "LITTLE":"2"}
+Polarity = {"POS":"0", "NEG":"1"}
+ContextualModality = {"ACTUAL":"0", "HYPOTHETICAL":"1", "HEDGED":"2", "GENERIC":"3"}
+ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2"}
+Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2"}
 
 def make_dirs(dirs):
     for d in dirs:

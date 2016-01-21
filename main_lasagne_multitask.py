@@ -450,49 +450,49 @@ if __name__ == '__main__':
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
 
-                            if dcr_label == 1:
+                            if dcr_label == 0:
                                 f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
-                            elif dcr_label == 2:
+                            elif dcr_label == 1:
                                 f.write("\t\t\t<DocTimeRel>"+"OVERLAP"+"</DocTimeRel>\n")
-                            elif dcr_label == 3:
+                            elif dcr_label == 2:
                                 f.write("\t\t\t<DocTimeRel>"+"AFTER"+"</DocTimeRel>\n")
-                            elif dcr_label == 4:
+                            elif dcr_label == 3:
                                 f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
                             else:
                                 print "dcr %d"%dcr_label
 
-                            if type_label == 1:
+                            if type_label == 0:
                                 f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
-                            elif type_label == 2:
+                            elif type_label == 1:
                                 f.write("\t\t\t<Type>"+"ASPECTUAL"+"</Type>\n")
-                            elif type_label == 3:
+                            elif type_label == 2:
                                 f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
                             else:
                                 print "type_label %d"%type_label
 
-                            if degree_label == 1:
+                            if degree_label == 0:
                                 f.write("\t\t\t<Degree>"+"N/A"+"</Degree>\n")
-                            elif degree_label == 2:
+                            elif degree_label == 1:
                                 f.write("\t\t\t<Degree>"+"MOST"+"</Degree>\n")
-                            elif degree_label == 3:
+                            elif degree_label == 2:
                                 f.write("\t\t\t<Degree>"+"LITTLE"+"</Degree>\n")
                             else:
                                 print "degree_label %d"%degree_label
 
-                            if pol_label == 1:
+                            if pol_label == 0:
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                            elif pol_label == 2:
+                            elif pol_label == 1:
                                 f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
                             else:
                                 print "pol_label %d"%pol_label
 
-                            if cm_label == 1:
+                            if cm_label == 0:
                                 f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
-                            elif cm_label == 2:
+                            elif cm_label == 1:
                                 f.write("\t\t\t<ContextualModality>"+"HYPOTHETICAL"+"</ContextualModality>\n")
-                            elif cm_label == 3:
+                            elif cm_label == 2:
                                 f.write("\t\t\t<ContextualModality>"+"HEDGED"+"</ContextualModality>\n")
-                            elif cm_label == 4:
+                            elif cm_label == 3:
                                 f.write("\t\t\t<ContextualModality>"+"GENERIC"+"</ContextualModality>\n")
                             else:
                                 print "cm_label %d"%cm_label
