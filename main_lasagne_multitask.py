@@ -334,7 +334,30 @@ if __name__ == '__main__':
                 best_val_acc_dcr = val_score_dcr
                 save_network(model_save_path+".dcr",get_all_param_values(network_dcr))
 
-        
+            val_score_type = val_acc_type / val_batches * 100
+            print(" Type validation accuracy:\t\t{:.2f} %".format(val_score_type))
+            if best_val_acc_type < val_score_type:
+                best_val_acc_type = val_score_type
+                save_network(model_save_path+".type",get_all_param_values(network_type))
+
+            val_score_degree = val_acc_degree / val_batches * 100
+            print(" Degree validation accuracy:\t\t{:.2f} %".format(val_score_degree))
+            if best_val_acc_degree < val_score_degree:
+                best_val_acc_degree = val_score_degree
+                save_network(model_save_path+".degree",get_all_param_values(network_type))
+
+            val_score_pol = val_acc_pol / val_batches * 100
+            print(" Polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
+            if best_val_acc_pol < val_score_pol:
+                best_val_acc_pol = val_score_pol
+                save_network(model_save_path+".pol",get_all_param_values(network_type))
+
+            val_score_cm = val_acc_cm / val_batches * 100
+            print(" ContextualModality validation accuracy:\t\t{:.2f} %".format(val_score_cm))
+            if best_val_acc_cm < val_score_cm:
+                best_val_acc_cm = val_score_cm
+                save_network(model_save_path+".cm",get_all_param_values(network_type))
+
     elif args.mode == "test":
 
         print("Starting testing...")
@@ -343,27 +366,38 @@ if __name__ == '__main__':
         
         _, _,seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "dev")
         
-        train_fn_span, val_fn_span, network_span, train_fn_pol, val_fn_pol, network_pol = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        train_fn_span, val_fn_span, network_span, train_fn_dcr, val_fn_dcr, network_dcr, \
+        train_fn_type, val_fn_type, network_type, train_fn_degree, val_fn_degree, network_degree, \
+        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+
 
         print model_save_pre_path
+
         saved_params_span = load_network(model_save_pre_path+".span")
         set_all_param_values(network_span, saved_params_span)
+
+        saved_params_dcr = load_network(model_save_pre_path+".dcr")
+        set_all_param_values(network_dcr, saved_params_dcr)
+
+        saved_params_type = load_network(model_save_pre_path+".type")
+        set_all_param_values(network_type, saved_params_type)
+
+        saved_params_degree = load_network(model_save_pre_path+".degree")
+        set_all_param_values(network_degree, saved_params_degree)
 
         saved_params_pol = load_network(model_save_pre_path+".pol")
         set_all_param_values(network_pol, saved_params_pol)
 
+        saved_params_cm = load_network(model_save_pre_path+".cm")
+        set_all_param_values(network_cm, saved_params_cm)
 
-        p_y_given_x_span = get_output(network_span, deterministic=True)
 
-        p_y_given_x_pol = get_output(network_pol, deterministic=True)
-
-        output_span = T.argmax(p_y_given_x_span, axis=1)
-
-        output_pol = T.argmax(p_y_given_x_pol, axis=1)
-
-        pred_fn_span = theano.function([input_var], output_span)
-
-        pred_fn_pol = theano.function([input_var], output_pol)
+        pred_fn_span = theano.function([input_var], T.argmax(get_output(network_span, deterministic=True), axis=1))
+        pred_fn_dcr = theano.function([input_var], T.argmax(get_output(network_dcr, deterministic=True), axis=1))
+        pred_fn_type = theano.function([input_var], T.argmax(get_output(network_type, deterministic=True), axis=1))
+        pred_fn_degree = theano.function([input_var], T.argmax(get_output(network_degree, deterministic=True), axis=1))
+        pred_fn_pol = theano.function([input_var], T.argmax(get_output(network_pol, deterministic=True), axis=1))
+        pred_fn_cm = theano.function([input_var], T.argmax(get_output(network_cm, deterministic=True), axis=1))
         
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
@@ -384,8 +418,11 @@ if __name__ == '__main__':
                 totalPredEventSpans += len(spans)
 
                 predict_span = pred_fn_span(features)
-
+                predict_dcr = pred_fn_dcr(features)
+                predict_type = pred_fn_type(features)
+                predict_degree = pred_fn_degree(features)
                 predict_pol = pred_fn_pol(features)
+                predict_cm = pred_fn_cm(features)
 
                 dn = os.path.join(output_dir, fn)
                 if not os.path.exists(dn):
@@ -402,7 +439,7 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                    for i, (span_label, dcr_label, type_label, degree_label, pol_label, cm_label) in enumerate(zip(predict_span, predict_dcr, predict_type, predict_degree, predict_pol, predict_cm)):
                         if span_label == 1:
                             totalCorrEventSpans += 1
                             f.write("\t<entity>\n")
@@ -411,18 +448,44 @@ if __name__ == '__main__':
                             f.write("\t\t<type>EVENT</type>\n")
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
-                            f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
-                            f.write("\t\t\t<Type>N/A</Type>\n")
-                            f.write("\t\t\t<Degree>N/A</Degree>\n")
-                            
+
+                            if dcr_label == 1:
+                                f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
+                            elif dcr_label == 2:
+                                f.write("\t\t\t<DocTimeRel>"+"OVERLAP"+"</DocTimeRel>\n")
+                            elif dcr_label == 3:
+                                f.write("\t\t\t<DocTimeRel>"+"AFTER"+"</DocTimeRel>\n")
+                            elif dcr_label == 4:
+                                f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
+
+                            if type_label == 1:
+                                f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
+                            elif type_label == 2:
+                                f.write("\t\t\t<Type>"+"ASPECTUAL"+"</Type>\n")
+                            elif type_label == 3:
+                                f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
+
+                            if degree_label == 1:
+                                f.write("\t\t\t<Degree>"+"N/A"+"</Degree>\n")
+                            elif degree_label == 2:
+                                f.write("\t\t\t<Degree>"+"MOST"+"</Degree>\n")
+                            elif degree_label == 3:
+                                f.write("\t\t\t<Degree>"+"LITTLE"+"</Degree>\n")
+
                             if pol_label == 1:
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                             elif pol_label == 2:
                                 f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            else:
-                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            
-                            f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
+
+                            if cm_label == 1:
+                                f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
+                            elif cm_label == 2:
+                                f.write("\t\t\t<ContextualModality>"+"HYPOTHETICAL"+"</ContextualModality>\n")
+                            elif cm_label == 3:
+                                f.write("\t\t\t<ContextualModality>"+"HEDGED"+"</ContextualModality>\n")
+                            elif cm_label == 4:
+                                f.write("\t\t\t<ContextualModality>"+"GENERIC"+"</ContextualModality>\n")
+
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
                             f.write("\t\t</properties>\n")
