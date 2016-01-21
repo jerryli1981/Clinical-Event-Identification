@@ -102,7 +102,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     network_8 = DenseLayer(hid_8, num_units=3, nonlinearity=softmax)
 
 
-    # This is important?
+    # Is this important?
     network_1_out, network_2_out, network_3_out, network_4_out, \
     network_5_out, network_6_out, network_7_out, network_8_out = \
     get_output([network_1, network_2, network_3, network_4, network_5, network_6, network_7, network_8])
@@ -356,14 +356,14 @@ if __name__ == '__main__':
             print("Polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
             if best_val_acc_pol < val_score_pol:
                 best_val_acc_pol = val_score_pol
-                save_network(model_save_path+".pol",get_all_param_values(network_type))
+                save_network(model_save_path+".pol",get_all_param_values(network_pol))
 
             print("ContextualModality training loss:\t\t{:.6f}".format(train_loss_cm / train_batches))
             val_score_cm = val_acc_cm / val_batches * 100
             print("ContextualModality validation accuracy:\t\t{:.2f} %".format(val_score_cm))
             if best_val_acc_cm < val_score_cm:
                 best_val_acc_cm = val_score_cm
-                save_network(model_save_path+".cm",get_all_param_values(network_type))
+                save_network(model_save_path+".cm",get_all_param_values(network_cm))
 
     elif args.mode == "test":
 
