@@ -348,7 +348,7 @@ if __name__ == '__main__':
             print("Degree validation accuracy:\t\t{:.2f} %".format(val_score_degree))
             if best_val_acc_degree < val_score_degree:
                 best_val_acc_degree = val_score_degree
-                save_network(model_save_path+".degree",get_all_param_values(network_type))
+                save_network(model_save_path+".degree",get_all_param_values(network_degree)
 
 
             print("Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
