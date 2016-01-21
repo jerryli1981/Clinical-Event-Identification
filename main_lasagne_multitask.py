@@ -142,7 +142,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     val_acc_4 =  T.mean(categorical_accuracy(get_output(network_4, deterministic=True), target_var))
     val_fn_4 = theano.function([input_var, target_var], val_acc_4, allow_input_downcast=True)
 
-    loss_5 = T.mean(categorical_crossentropy(network_5_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_5:lambda_val, 
+    loss_5 = T.mean(binary_crossentropy(network_5_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_5:lambda_val, 
                 hid_5:lambda_val, network_5:lambda_val} , l2)
     updates_5 = adagrad(loss_5, get_all_params(network_5, trainable=True), learning_rate=args.step)
     train_fn_5 = theano.function([input_var, target_var], 
@@ -464,6 +464,8 @@ if __name__ == '__main__':
                                 f.write("\t\t\t<DocTimeRel>"+"AFTER"+"</DocTimeRel>\n")
                             elif dcr_label == 4:
                                 f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
+                            else:
+                                print "dcr %d"%dcr_label
 
                             if type_label == 1:
                                 f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
@@ -471,6 +473,8 @@ if __name__ == '__main__':
                                 f.write("\t\t\t<Type>"+"ASPECTUAL"+"</Type>\n")
                             elif type_label == 3:
                                 f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
+                            else:
+                                print "type_label %d"%type_label
 
                             if degree_label == 1:
                                 f.write("\t\t\t<Degree>"+"N/A"+"</Degree>\n")
@@ -478,11 +482,15 @@ if __name__ == '__main__':
                                 f.write("\t\t\t<Degree>"+"MOST"+"</Degree>\n")
                             elif degree_label == 3:
                                 f.write("\t\t\t<Degree>"+"LITTLE"+"</Degree>\n")
+                            else:
+                                print "degree_label %d"%degree_label
 
                             if pol_label == 1:
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                             elif pol_label == 2:
                                 f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                            else:
+                                print "pol_label %d"%pol_label
 
                             if cm_label == 1:
                                 f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
@@ -492,6 +500,8 @@ if __name__ == '__main__':
                                 f.write("\t\t\t<ContextualModality>"+"HEDGED"+"</ContextualModality>\n")
                             elif cm_label == 4:
                                 f.write("\t\t\t<ContextualModality>"+"GENERIC"+"</ContextualModality>\n")
+                            else:
+                                print "cm_label %d"%cm_label
 
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
