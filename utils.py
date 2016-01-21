@@ -13,7 +13,13 @@ from random import shuffle
 
 tagger = PerceptronTagger()
 
+DocTimeRel = {"BEFORE":"1", "OVERLAP":"2", "AFTER":"3", "BEFORE/OVERLAP":"4"}
+Type={"N/A":"1", "ASPECTUAL":"2", "EVIDENTIAL":"3"}
+Degree = {"N/A":"1", "MOST":"2", "LITTLE":"3"}
 Polarity = {"POS":"1", "NEG":"2"}
+ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":"4"}
+ContextualAspect = {"N/A":"1", "NOVEL":"2", "INTERMITTENT":"3"}
+Permanence = {"UNDETERMINED":"1", "FINITE":"2", "PERMANENT":"3"}
 
 def make_dirs(dirs):
     for d in dirs:
@@ -164,10 +170,10 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                     span_property_map = dict()
 
                     content = f.read()
+
                     positive_spans=[]
-                    positive_feats=[]
-                    positive_labels=[]
                     positive_span_feat_map={}
+
                     for annotation in data.annotations:
                         if annotation.type == 'EVENT':
                             positive +=1
@@ -187,11 +193,20 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
 
                             span_property_map[(startoffset,endoffset)] = pros
                             positive_spans.append((startoffset,endoffset))
-                            positive_feats.append(feats)
-                            pol_label = Polarity[pros["Polarity"]]
-                            positive_labels.append("1"+" "+pol_label)
+         
+                            DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
+                            Type_label = Type[pros["Type"]]
+                            Degree_label = Degree[pros["Degree"]]
+                            Polarity_label = Polarity[pros["Polarity"]]
+                            ContextualModality_label = ContextualModality[pros["ContextualModality"]]
+                            ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
+                            Permanence_label = Permanence[pros["Permanence"]]
+    
+                            positive_span_feat_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
+                                +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
 
-                            positive_span_feat_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" "+pol_label
+
 
                     all_spans = set()
                     all_toks = regexp_tokenize(content, pattern='[\w\/]+')
@@ -201,17 +216,13 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                         all_spans.add((start_index,start_index+len(tok)))
 
                     negative_spans=[]
-                    negative_feats=[]
-                    negative_labels=[]
                     negative_span_feat_map={}
                     for span in all_spans:
                         if span not in span_property_map:
                             negative += 1
                             negative_spans.append(span)
                             feats = feature_generation(content, span[0], span[1], window_size, num_feats)
-                            negative_feats.append(feats)
-                            negative_labels.append("0"+" "+"0")
-                            negative_span_feat_map[span] = feats+"\t"+"0 0"
+                            negative_span_feat_map[span] = feats+"\t"+"0 0 0 0 0 0 0 0"
 
                     merged_spans = positive_spans+negative_spans
                     shuffle(merged_spans)
@@ -313,8 +324,15 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
     for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
         vocab[word] = idx
 
-    event_labels = []
-    polarity_labels=[]
+    Event_label = []
+    DocTimeRel_label = []
+    Type_label = []
+    Degree_label = []
+    Polarity_label = []
+    ContextualModality_label = []
+    ContextualAspect_label = []
+    Permanence_label = []
+
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
         f1.readline()                 
         for i, (a, ent) in enumerate(zip(f1,f4)):
@@ -322,9 +340,15 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
             a = a.rstrip('\n')
             label = ent.rstrip('\n')
 
-            el, pl = label.split()
-            event_labels.append(el)
-            polarity_labels.append(pl)
+            l0, l1, l2, l3, l4, l5, l6, l7 = label.split()
+            Event_label.append(l0)
+            DocTimeRel_label.append(l1)
+            Type_label.append(l2)
+            Degree_label.append(l3)
+            Polarity_label.append(l4)
+            ContextualModality_label.append(l5)
+            ContextualAspect_label.append(l6)
+            Permanence_label.append(l7)
 
             toks_a = a.split()
             assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
@@ -337,10 +361,19 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    Y_labels = np.zeros((X.shape[0], 5))
+    Y_labels = np.zeros((X.shape[0], 24))
     for i in range(X.shape[0]):
-        Y_labels[i, int(event_labels[i])] = 1
-        Y_labels[i, 2+int(polarity_labels[i])] = 1
+
+        Y_labels[i, int(Event_label[i])] = 1
+        Y_labels[i, 2+int(DocTimeRel_label[i])] = 1
+        Y_labels[i, len(DocTimeRel) + int(Type_label[i])] = 1
+        Y_labels[i, len(Type) + int(Degree_label[i])] = 1
+        Y_labels[i, len(Degree) + int(Polarity_label[i])] = 1
+        Y_labels[i, len(Polarity) + int(ContextualModality_label[i])] = 1
+        Y_labels[i, len(ContextualModality) + int(ContextualAspect_label[i])] = 1
+        Y_labels[i, len(ContextualAspect) + int(Permanence_label[i])] = 1
+
+    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 24, "length error"
 
     return X, Y_labels, seqlen, num_feats
 

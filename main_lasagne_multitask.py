@@ -50,6 +50,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
 
+
     conv1d_1 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
         nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
     maxpool_1 = MaxPool1DLayer(conv1d_1, pool_size=pool_size)  
@@ -61,10 +62,50 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
         nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
     maxpool_2 = MaxPool1DLayer(conv1d_2, pool_size=pool_size)  
     hid_2 = DenseLayer(maxpool_2, num_units=args.hiddenDim, nonlinearity=sigmoid)
-    network_2 = DenseLayer(hid_2, num_units=3, nonlinearity=softmax)
+    network_2 = DenseLayer(hid_2, num_units=4, nonlinearity=softmax)
+
+    conv1d_3 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_3 = MaxPool1DLayer(conv1d_3, pool_size=pool_size)  
+    hid_3 = DenseLayer(maxpool_3, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_3 = DenseLayer(hid_3, num_units=3, nonlinearity=softmax)
+
+    conv1d_4 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_4 = MaxPool1DLayer(conv1d_4, pool_size=pool_size)  
+    hid_4 = DenseLayer(maxpool_4, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_4 = DenseLayer(hid_4, num_units=3, nonlinearity=softmax)
+
+    conv1d_5 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_5 = MaxPool1DLayer(conv1d_5, pool_size=pool_size)  
+    hid_5 = DenseLayer(maxpool_5, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_5 = DenseLayer(hid_5, num_units=2, nonlinearity=softmax)
+
+    conv1d_6 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_6 = MaxPool1DLayer(conv1d_6, pool_size=pool_size)  
+    hid_6 = DenseLayer(maxpool_6, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_6 = DenseLayer(hid_6, num_units=4, nonlinearity=softmax)
+
+
+    conv1d_7 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_7 = MaxPool1DLayer(conv1d_7, pool_size=pool_size)  
+    hid_7 = DenseLayer(maxpool_7, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_7 = DenseLayer(hid_7, num_units=3, nonlinearity=softmax)
+
+    conv1d_8 = DimshuffleLayer(Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
+        nonlinearity=tanh,W=GlorotUniform()), (0,2,1))
+    maxpool_8 = MaxPool1DLayer(conv1d_8, pool_size=pool_size)  
+    hid_8 = DenseLayer(maxpool_8, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    network_8 = DenseLayer(hid_8, num_units=3, nonlinearity=softmax)
+
 
     # This is important?
-    network_1_out, network_2_out = get_output([network_1, network_2])
+    network_1_out, network_2_out, network_3_out, network_4_out, \
+    network_5_out, network_6_out, network_7_out, network_8_out = \
+    get_output([network_1, network_2, network_3, network_4, network_5, network_6, network_7, network_8])
 
     loss_1 = T.mean(binary_crossentropy(network_1_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_1:lambda_val, 
                 hid_1:lambda_val, network_1:lambda_val} , l2)
@@ -84,7 +125,41 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     val_fn_2 = theano.function([input_var, target_var], val_acc_2, allow_input_downcast=True)
 
 
-    return train_fn_1, val_fn_1, network_1, train_fn_2, val_fn_2, network_2
+    loss_3 = T.mean(categorical_crossentropy(network_3_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_3:lambda_val, 
+                hid_3:lambda_val, network_3:lambda_val} , l2)
+    updates_3 = adagrad(loss_3, get_all_params(network_3, trainable=True), learning_rate=args.step)
+    train_fn_3 = theano.function([input_var, target_var], 
+        loss_3, updates=updates_3, allow_input_downcast=True)
+    val_acc_3 =  T.mean(categorical_accuracy(get_output(network_3, deterministic=True), target_var))
+    val_fn_3 = theano.function([input_var, target_var], val_acc_3, allow_input_downcast=True)
+
+
+    loss_4 = T.mean(categorical_crossentropy(network_4_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_4:lambda_val, 
+                hid_4:lambda_val, network_4:lambda_val} , l2)
+    updates_4 = adagrad(loss_4, get_all_params(network_4, trainable=True), learning_rate=args.step)
+    train_fn_4 = theano.function([input_var, target_var], 
+        loss_4, updates=updates_4, allow_input_downcast=True)
+    val_acc_4 =  T.mean(categorical_accuracy(get_output(network_4, deterministic=True), target_var))
+    val_fn_4 = theano.function([input_var, target_var], val_acc_4, allow_input_downcast=True)
+
+    loss_5 = T.mean(categorical_crossentropy(network_5_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_5:lambda_val, 
+                hid_5:lambda_val, network_5:lambda_val} , l2)
+    updates_5 = adagrad(loss_5, get_all_params(network_5, trainable=True), learning_rate=args.step)
+    train_fn_5 = theano.function([input_var, target_var], 
+        loss_5, updates=updates_5, allow_input_downcast=True)
+    val_acc_5 =  T.mean(categorical_accuracy(get_output(network_5, deterministic=True), target_var))
+    val_fn_5 = theano.function([input_var, target_var], val_acc_5, allow_input_downcast=True)
+
+    loss_6 = T.mean(categorical_crossentropy(network_6_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_6:lambda_val, 
+                hid_6:lambda_val, network_6:lambda_val} , l2)
+    updates_6 = adagrad(loss_6, get_all_params(network_6, trainable=True), learning_rate=args.step)
+    train_fn_6 = theano.function([input_var, target_var], 
+        loss_6, updates=updates_6, allow_input_downcast=True)
+    val_acc_6 =  T.mean(categorical_accuracy(get_output(network_6, deterministic=True), target_var))
+    val_fn_6 = theano.function([input_var, target_var], val_acc_6, allow_input_downcast=True)
+
+
+    return train_fn_1, val_fn_1, network_1, train_fn_2, val_fn_2, network_2, train_fn_3, val_fn_3, network_3, train_fn_4, val_fn_4, network_4, train_fn_5, val_fn_5, network_5, train_fn_6, val_fn_6, network_6
 
 def save_network(filename, param_values):
     with open(filename, 'wb') as f:
@@ -148,11 +223,17 @@ if __name__ == '__main__':
 
         print "window_size is %d"%((seqlen-1)/2)
 
-        train_fn_span, val_fn_span, network_span, train_fn_pol, val_fn_pol, network_pol = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        train_fn_span, val_fn_span, network_span, train_fn_dcr, val_fn_dcr, network_dcr, \
+        train_fn_type, val_fn_type, network_type, train_fn_degree, val_fn_degree, network_degree, \
+        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
         best_val_acc_span = 0
+        best_val_acc_dcr = 0
+        best_val_acc_type = 0
+        best_val_acc_degree= 0
         best_val_acc_pol = 0
+        best_val_acc_cm = 0
 
         maxlen = 0
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
@@ -160,7 +241,11 @@ if __name__ == '__main__':
 
         for epoch in range(args.epochs):
             train_loss_span = 0
+            train_loss_dcr = 0
+            train_loss_type = 0
+            train_loss_degree = 0
             train_loss_pol = 0
+            train_loss_cm = 0
             train_batches = 0
             start_time = time.time()
 
@@ -174,7 +259,11 @@ if __name__ == '__main__':
                 inputs, labels= batch
 
                 train_loss_span += train_fn_span(inputs, labels[:,0:2])
-                train_loss_pol += train_fn_pol(inputs, labels[:,2:])
+                train_loss_dcr += train_fn_dcr(inputs, labels[:,2:6])
+                train_loss_type += train_fn_type(inputs, labels[:,6:9])
+                train_loss_degree += train_fn_degree(inputs, labels[:,9:12])
+                train_loss_pol += train_fn_pol(inputs, labels[:,12:14])
+                train_loss_cm += train_fn_cm(inputs, labels[:,14:18])
 
                 """
                 inputs_1 = inputs[ : inputs.shape[0]/2, :]
@@ -192,7 +281,11 @@ if __name__ == '__main__':
             pbar.finish()
 
             val_acc_span = 0
+            val_acc_dcr=0
+            val_acc_type=0
+            val_acc_degree=0
             val_acc_pol=0
+            val_acc_cm=0
             val_batches = 0
 
             for batch in iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False):
@@ -212,9 +305,13 @@ if __name__ == '__main__':
                 acc_pol = val_fn_pol(inputs_2, labels_2[:,2:])
                 val_acc_pol += acc_pol
                 """
-                val_acc_span += val_fn_span(inputs, labels[:,0:2])
 
-                val_acc_pol += val_fn_pol(inputs, labels[:,2:])
+                val_acc_span += val_acc_span(inputs, labels[:,0:2])
+                val_acc_dcr += val_acc_dcr(inputs, labels[:,2:6])
+                val_acc_type += val_acc_type(inputs, labels[:,6:9])
+                val_acc_degree += val_acc_degree(inputs, labels[:,9:12])
+                val_acc_pol += val_acc_pol(inputs, labels[:,12:14])
+                val_acc_cm += val_acc_cm(inputs, labels[:,14:18])
 
                 val_batches += 1
 
@@ -223,7 +320,7 @@ if __name__ == '__main__':
                 epoch + 1, args.epochs, time.time() - start_time))
 
             print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
-            print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
+            print("  Doc Time Rel training loss:\t\t{:.6f}".format(train_loss_dcr / train_batches))
 
             val_score_span = val_acc_span / val_batches * 100
             print("  span validation accuracy:\t\t{:.2f} %".format(val_score_span))
@@ -231,14 +328,13 @@ if __name__ == '__main__':
                 best_val_acc_span = val_score_span
                 save_network(model_save_path+".span",get_all_param_values(network_span))
 
-            val_score_pol = val_acc_pol / val_batches * 100
-            print("  polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
-            if best_val_acc_pol < val_score_pol:
-                best_val_acc_pol = val_score_pol
-                save_network(model_save_path+".pol",get_all_param_values(network_pol))
+            val_score_dcr = val_acc_dcr / val_batches * 100
+            print(" Doc Time Rel validation accuracy:\t\t{:.2f} %".format(val_score_dcr))
+            if best_val_acc_dcr < val_score_dcr:
+                best_val_acc_dcr = val_score_dcr
+                save_network(model_save_path+".dcr",get_all_param_values(network_dcr))
 
         
-    
     elif args.mode == "test":
 
         print("Starting testing...")
