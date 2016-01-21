@@ -306,12 +306,12 @@ if __name__ == '__main__':
                 val_acc_pol += acc_pol
                 """
 
-                val_acc_span += val_acc_span(inputs, labels[:,0:2])
-                val_acc_dcr += val_acc_dcr(inputs, labels[:,2:6])
-                val_acc_type += val_acc_type(inputs, labels[:,6:9])
-                val_acc_degree += val_acc_degree(inputs, labels[:,9:12])
-                val_acc_pol += val_acc_pol(inputs, labels[:,12:14])
-                val_acc_cm += val_acc_cm(inputs, labels[:,14:18])
+                val_acc_span += val_fn_span(inputs, labels[:,0:2])
+                val_acc_dcr += val_fn_dcr(inputs, labels[:,2:6])
+                val_acc_type += val_fn_type(inputs, labels[:,6:9])
+                val_acc_degree += val_fn_degree(inputs, labels[:,9:12])
+                val_acc_pol += val_fn_pol(inputs, labels[:,12:14])
+                val_acc_cm += val_fn_cm(inputs, labels[:,14:18])
 
                 val_batches += 1
 
