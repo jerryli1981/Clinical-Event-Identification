@@ -110,8 +110,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     loss_1 = T.mean(binary_crossentropy(network_1_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_1:lambda_val, 
                 hid_1:lambda_val, network_1:lambda_val} , l2)
     updates_1 = adagrad(loss_1, get_all_params(network_1, trainable=True), learning_rate=args.step)
-    train_fn_1 = theano.function([input_var, target_var], 
-        loss_1, updates=updates_1, allow_input_downcast=True)
+    train_fn_1 = theano.function([input_var, target_var], loss_1, updates=updates_1, allow_input_downcast=True)
     val_acc_1 =  T.mean(binary_accuracy(get_output(network_1, deterministic=True), target_var))
     val_fn_1 = theano.function([input_var, target_var], val_acc_1, allow_input_downcast=True)
 
@@ -119,8 +118,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     loss_2 = T.mean(categorical_crossentropy(network_2_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_2:lambda_val, 
                 hid_2:lambda_val, network_2:lambda_val} , l2)
     updates_2 = adagrad(loss_2, get_all_params(network_2, trainable=True), learning_rate=args.step)
-    train_fn_2 = theano.function([input_var, target_var], 
-        loss_2, updates=updates_2, allow_input_downcast=True)
+    train_fn_2 = theano.function([input_var, target_var], loss_2, updates=updates_2, allow_input_downcast=True)
     val_acc_2 =  T.mean(categorical_accuracy(get_output(network_2, deterministic=True), target_var))
     val_fn_2 = theano.function([input_var, target_var], val_acc_2, allow_input_downcast=True)
 
@@ -128,8 +126,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     loss_3 = T.mean(categorical_crossentropy(network_3_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_3:lambda_val, 
                 hid_3:lambda_val, network_3:lambda_val} , l2)
     updates_3 = adagrad(loss_3, get_all_params(network_3, trainable=True), learning_rate=args.step)
-    train_fn_3 = theano.function([input_var, target_var], 
-        loss_3, updates=updates_3, allow_input_downcast=True)
+    train_fn_3 = theano.function([input_var, target_var], loss_3, updates=updates_3, allow_input_downcast=True)
     val_acc_3 =  T.mean(categorical_accuracy(get_output(network_3, deterministic=True), target_var))
     val_fn_3 = theano.function([input_var, target_var], val_acc_3, allow_input_downcast=True)
 
@@ -137,24 +134,21 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     loss_4 = T.mean(categorical_crossentropy(network_4_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_4:lambda_val, 
                 hid_4:lambda_val, network_4:lambda_val} , l2)
     updates_4 = adagrad(loss_4, get_all_params(network_4, trainable=True), learning_rate=args.step)
-    train_fn_4 = theano.function([input_var, target_var], 
-        loss_4, updates=updates_4, allow_input_downcast=True)
+    train_fn_4 = theano.function([input_var, target_var], loss_4, updates=updates_4, allow_input_downcast=True)
     val_acc_4 =  T.mean(categorical_accuracy(get_output(network_4, deterministic=True), target_var))
     val_fn_4 = theano.function([input_var, target_var], val_acc_4, allow_input_downcast=True)
 
     loss_5 = T.mean(binary_crossentropy(network_5_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_5:lambda_val, 
                 hid_5:lambda_val, network_5:lambda_val} , l2)
     updates_5 = adagrad(loss_5, get_all_params(network_5, trainable=True), learning_rate=args.step)
-    train_fn_5 = theano.function([input_var, target_var], 
-        loss_5, updates=updates_5, allow_input_downcast=True)
+    train_fn_5 = theano.function([input_var, target_var], loss_5, updates=updates_5, allow_input_downcast=True)
     val_acc_5 =  T.mean(binary_accuracy(get_output(network_5, deterministic=True), target_var))
     val_fn_5 = theano.function([input_var, target_var], val_acc_5, allow_input_downcast=True)
 
     loss_6 = T.mean(categorical_crossentropy(network_6_out,target_var)) + regularize_layer_params_weighted({emb:lambda_val, conv1d_6:lambda_val, 
                 hid_6:lambda_val, network_6:lambda_val} , l2)
     updates_6 = adagrad(loss_6, get_all_params(network_6, trainable=True), learning_rate=args.step)
-    train_fn_6 = theano.function([input_var, target_var], 
-        loss_6, updates=updates_6, allow_input_downcast=True)
+    train_fn_6 = theano.function([input_var, target_var], loss_6, updates=updates_6, allow_input_downcast=True)
     val_acc_6 =  T.mean(categorical_accuracy(get_output(network_6, deterministic=True), target_var))
     val_fn_6 = theano.function([input_var, target_var], val_acc_6, allow_input_downcast=True)
 
@@ -228,12 +222,12 @@ if __name__ == '__main__':
         train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
-        best_val_acc_span = 0
-        best_val_acc_dcr = 0
-        best_val_acc_type = 0
-        best_val_acc_degree= 0
-        best_val_acc_pol = 0
-        best_val_acc_cm = 0
+        best_val_acc_span = -0.1
+        best_val_acc_dcr = -0.1
+        best_val_acc_type = -0.1
+        best_val_acc_degree= -0.1
+        best_val_acc_pol = -0.1
+        best_val_acc_cm = -0.1
 
         maxlen = 0
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
