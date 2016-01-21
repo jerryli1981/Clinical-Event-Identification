@@ -320,38 +320,45 @@ if __name__ == '__main__':
                 epoch + 1, args.epochs, time.time() - start_time))
 
             print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
-            print("  Doc Time Rel training loss:\t\t{:.6f}".format(train_loss_dcr / train_batches))
-
             val_score_span = val_acc_span / val_batches * 100
             print("  span validation accuracy:\t\t{:.2f} %".format(val_score_span))
             if best_val_acc_span < val_score_span:
                 best_val_acc_span = val_score_span
                 save_network(model_save_path+".span",get_all_param_values(network_span))
 
+
+            print("  Doc Time Rel training loss:\t\t{:.6f}".format(train_loss_dcr / train_batches))
             val_score_dcr = val_acc_dcr / val_batches * 100
             print(" Doc Time Rel validation accuracy:\t\t{:.2f} %".format(val_score_dcr))
             if best_val_acc_dcr < val_score_dcr:
                 best_val_acc_dcr = val_score_dcr
                 save_network(model_save_path+".dcr",get_all_param_values(network_dcr))
 
+
+            print(" Type training loss:\t\t{:.6f}".format(train_loss_type / train_batches))
             val_score_type = val_acc_type / val_batches * 100
             print(" Type validation accuracy:\t\t{:.2f} %".format(val_score_type))
             if best_val_acc_type < val_score_type:
                 best_val_acc_type = val_score_type
                 save_network(model_save_path+".type",get_all_param_values(network_type))
 
+
+            print("Degree training loss:\t\t{:.6f}".format(train_loss_degree / train_batches))
             val_score_degree = val_acc_degree / val_batches * 100
             print(" Degree validation accuracy:\t\t{:.2f} %".format(val_score_degree))
             if best_val_acc_degree < val_score_degree:
                 best_val_acc_degree = val_score_degree
                 save_network(model_save_path+".degree",get_all_param_values(network_type))
 
+
+            print("Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
             val_score_pol = val_acc_pol / val_batches * 100
             print(" Polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
             if best_val_acc_pol < val_score_pol:
                 best_val_acc_pol = val_score_pol
                 save_network(model_save_path+".pol",get_all_param_values(network_type))
 
+            print("ContextualModality training loss:\t\t{:.6f}".format(train_loss_cm / train_batches))
             val_score_cm = val_acc_cm / val_batches * 100
             print(" ContextualModality validation accuracy:\t\t{:.2f} %".format(val_score_cm))
             if best_val_acc_cm < val_score_cm:
