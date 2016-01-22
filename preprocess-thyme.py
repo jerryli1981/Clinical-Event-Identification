@@ -4,7 +4,7 @@ Preprocessing script for thyme data.
 """
 import os
 import glob
-from utils import preprocess_data, make_dirs, build_vocab, build_word2Vector
+from utils2 import preprocess_data, make_dirs, build_vocab, build_word2Vector
 
 if __name__ == '__main__':
 
