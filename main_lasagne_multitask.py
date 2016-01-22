@@ -30,7 +30,7 @@ from lasagne.objectives import categorical_crossentropy, squared_error, categori
 from lasagne.updates import sgd, adagrad, adadelta, nesterov_momentum, rmsprop, adam
 from lasagne.init import GlorotUniform
 
-from utils import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
+from utils2 import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
 def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats, lambda_val = 0.5 * 1e-4):
 
@@ -392,6 +392,7 @@ if __name__ == '__main__':
 
 
         print model_save_pre_path
+        
 
         saved_params_span = load_network(model_save_pre_path+".span")
         set_all_param_values(network_span, saved_params_span)
@@ -427,6 +428,7 @@ if __name__ == '__main__':
         pred_fn_ca = theano.function([input_var], T.argmax(get_output(network_ca, deterministic=True), axis=1))
         pred_fn_per = theano.function([input_var], T.argmax(get_output(network_per, deterministic=True), axis=1))
         
+        
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
         output_dir = os.path.join(base_dir, 'uta-output')
@@ -445,6 +447,7 @@ if __name__ == '__main__':
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
                 totalPredEventSpans += len(spans)
 
+                
                 predict_span = pred_fn_span(features)
                 predict_dcr = pred_fn_dcr(features)
                 predict_type = pred_fn_type(features)
@@ -550,6 +553,7 @@ if __name__ == '__main__':
                             count += 1
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
+                
                 
 
         print "Total pred event span is %d"%totalPredEventSpans
