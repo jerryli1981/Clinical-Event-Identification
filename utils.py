@@ -165,7 +165,7 @@ def content2span(content):
     """
 
     #all_spans = regexp_span_tokenize(content, '[\w\/]+')
-    
+
     all_spans = WhitespaceTokenizer.span_tokenize(content)
 
     return list(all_spans)
@@ -199,7 +199,6 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
 
 
                     content = f.read()
-
                     positive_span_feat_map={}
 
                     for annotation in data.annotations:
@@ -281,7 +280,7 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         Spans = content2span(content)
 
         Features = []
-        for span in all_spans:
+        for span in Spans:
             feats = feature_generation(content, span[0], span[1], window_size, num_feats)
             Features.append(feats)
 
