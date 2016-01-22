@@ -9,6 +9,8 @@ from nltk.tag.perceptron import PerceptronTagger
 
 from nltk.tokenize import regexp_tokenize, wordpunct_tokenize, WhitespaceTokenizer
 
+from nltk.tokenize.util import regexp_span_tokenize
+
 from random import shuffle
 
 tagger = PerceptronTagger()
@@ -148,11 +150,31 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
 
     return " ".join(features)
 
+def content2span(content):
+
+    """
+    all_spans = []
+    all_toks = regexp_tokenize(content, pattern='[\w\/]+')
+    #all_toks = wordpunct_tokenize(content)
+    #all_toks = WhitespaceTokenizer.tokenize(content)
+
+    for tok in all_toks:
+        start_index = content.find(tok)
+        all_spans.append((start_index,start_index+len(tok)))
+
+    """
+
+    #all_spans = regexp_span_tokenize(content, '[\w\/]+')
+    
+    all_spans = WhitespaceTokenizer.span_tokenize(content)
+
+    return list(all_spans)
+
 def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
-    positive = 0
-    mypositive = 0
-    negative=0
+    total_positive = 0
+    ext_positive = 0
+    ext_negative=0
 
     with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
         open(os.path.join(outDir, "label.txt"), 'w') as g_label:
@@ -174,22 +196,21 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
 
                     xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
                     data = anafora.AnaforaData.from_file(xml_path)
-                    span_property_map = dict()
+
 
                     content = f.read()
 
-                    positive_spans=[]
                     positive_span_feat_map={}
 
                     for annotation in data.annotations:
                         if annotation.type == 'EVENT':
-                            positive +=1
+                            total_positive +=1
                             startoffset = annotation.spans[0][0]
                             endoffset = annotation.spans[0][1]
                             if " " in content[startoffset:endoffset]:
                                 continue
                                 
-                            mypositive += 1
+                            ext_positive += 1
 
                             feats = feature_generation(content, startoffset, endoffset, window_size, num_feats)
                             properties = annotation.properties
@@ -197,9 +218,6 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                             for pro_name in properties:
                                 pro_val = properties.__getitem__(pro_name)
                                 pros[pro_name] = pro_val
-
-                            span_property_map[(startoffset,endoffset)] = pros
-                            positive_spans.append((startoffset,endoffset))
          
                             DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
                             Type_label = Type[pros["Type"]]
@@ -214,25 +232,16 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                                 +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
 
 
-                    all_spans = set()
-                    all_toks = regexp_tokenize(content, pattern='[\w\/]+')
-                    #all_toks = wordpunct_tokenize(content)
-                    #all_toks = WhitespaceTokenizer.tokenize(content)
+                    all_spans = content2span(content)
 
-                    for tok in all_toks:
-                        start_index = content.find(tok)
-                        all_spans.add((start_index,start_index+len(tok)))
-
-                    negative_spans=[]
                     negative_span_feat_map={}
                     for span in all_spans:
-                        if span not in span_property_map:
-                            negative += 1
-                            negative_spans.append(span)
+                        if span not in positive_span_feat_map:
+                            ext_negative += 1
                             feats = feature_generation(content, span[0], span[1], window_size, num_feats)
                             negative_span_feat_map[span] = feats+"\t"+"0 0 0 0 0 0 0 0"
 
-                    merged_spans = positive_spans+negative_spans
+                    merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
                     shuffle(merged_spans)
 
                     for span in merged_spans:
@@ -244,9 +253,9 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                         g_feature.write(feat+"\n")
                         g_label.write(lab+"\n")
 
-        print "Positive events is %d"%positive
-        print "My positive events is %d"%mypositive
-        print "Negative events is %d"%negative
+    print "Total positive events is %d"%total_positive
+    print "Extract positive events is %d"%ext_positive
+    print "Extract negative events is %d"%ext_negative
 
 
 # this method need keep for submit results
@@ -268,24 +277,12 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
     seqlen = 2*window_size+1
     with open(os.path.join(test_dir, fn), 'r') as f:
 
-        #Spans, Features = feature_extraction_enhanced(f.read(), window_size, num_feats)
-
         content = f.read()
+        Spans = content2span(content)
 
-        all_spans = []
-        all_toks = regexp_tokenize(content, pattern='[\w\/]+')
-        #all_toks = wordpunct_tokenize(content)
-        #all_toks = WhitespaceTokenizer.tokenize(content)
-
-        for tok in all_toks:
-            start_index = content.find(tok)
-            all_spans.append((start_index,start_index+len(tok)))
-
-        Spans = []
         Features = []
         for span in all_spans:
             feats = feature_generation(content, span[0], span[1], window_size, num_feats)
-            Spans.append(span)
             Features.append(feats)
 
         X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
