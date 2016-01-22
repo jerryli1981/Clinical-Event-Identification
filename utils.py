@@ -108,16 +108,16 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
     pre_content = content[0:startoffset-1]
     post_content=content[endoffset+1:]
 
-    #pre_list = regexp_tokenize(pre_content, pattern='[\w\/]+')
+    pre_list = regexp_tokenize(pre_content, pattern='[\w\/]+')
     #pre_list = wordpunct_tokenize(pre_content)
-    pre_list = WhitespaceTokenizer.tokenize(pre_content)
+    #pre_list = WhitespaceTokenizer.tokenize(pre_content)
     if len(pre_list) < window_size:
         for i in range(window_size-len(pre_list)):
             pre_list.insert(i, "UNK")
 
-    #post_list = regexp_tokenize(post_content, pattern='[\w\/]+')
+    post_list = regexp_tokenize(post_content, pattern='[\w\/]+')
     #post_list = wordpunct_tokenize(post_content)
-    post_list = WhitespaceTokenizer.tokenize(post_content)
+    #post_list = WhitespaceTokenizer.tokenize(post_content)
 
     if len(post_list) < window_size:
         for i in range(window_size-len(post_list)):
@@ -215,9 +215,9 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
 
 
                     all_spans = set()
-                    #all_toks = regexp_tokenize(content, pattern='[\w\/]+')
+                    all_toks = regexp_tokenize(content, pattern='[\w\/]+')
                     #all_toks = wordpunct_tokenize(content)
-                    all_toks = WhitespaceTokenizer.tokenize(content)
+                    #all_toks = WhitespaceTokenizer.tokenize(content)
 
                     for tok in all_toks:
                         start_index = content.find(tok)
@@ -273,9 +273,9 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         content = f.read()
 
         all_spans = set()
-        #all_toks = regexp_tokenize(content, pattern='[\w\/]+')
+        all_toks = regexp_tokenize(content, pattern='[\w\/]+')
         #all_toks = wordpunct_tokenize(content)
-        all_toks = WhitespaceTokenizer.tokenize(content)
+        #all_toks = WhitespaceTokenizer.tokenize(content)
 
         for tok in all_toks:
             start_index = content.find(tok)
