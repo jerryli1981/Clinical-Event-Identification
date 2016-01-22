@@ -107,13 +107,11 @@ def loadWord2VecMap(word2vec_path):
 
 def content2tokens(content):
 
-    # toks = WhitespaceTokenizer.tokenize(content)
-    # toks = regexp_tokenize(post_content, pattern='[\w\/]+')
+    #toks = WhitespaceTokenizer.tokenize(content)
+    #toks = regexp_tokenize(post_content, pattern='[\w\/]+')
     #toks = wordpunct_tokenize(content)
-    toks = word_tokenize(content)
-
-    #sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
-    #toks = re.sub("\\s{2,}", " ", sequence).split(" ")
+    #toks = word_tokenize(content)
+    toks = nltk.word_tokenize(content)
 
     return toks
 
@@ -133,8 +131,14 @@ def content2span(content):
     #all_spans = regexp_span_tokenize(content, '[\w\/]+')
 
     all_spans = WhitespaceTokenizer.span_tokenize(content)
+    filt_spans = []
+    for span in all_spans:
+        tok = content[span[0]:span[1]]
+        if not re.match(r'\w+', tok):
+            continue
+        filt_spans.append(span)
 
-    return list(all_spans)
+    return filt_spans
 
 def feature_generation(content, startoffset, endoffset, window_size=3, num_feats=2):
 
@@ -175,8 +179,6 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
         features.append(pos+" "+tok)
 
     return " ".join(features)
-
-
 
 def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
