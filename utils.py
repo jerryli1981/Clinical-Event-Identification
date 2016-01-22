@@ -272,14 +272,14 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
         content = f.read()
 
-        all_spans = set()
+        all_spans = []
         all_toks = regexp_tokenize(content, pattern='[\w\/]+')
         #all_toks = wordpunct_tokenize(content)
         #all_toks = WhitespaceTokenizer.tokenize(content)
 
         for tok in all_toks:
             start_index = content.find(tok)
-            all_spans.add((start_index,start_index+len(tok)))
+            all_spans.append((start_index,start_index+len(tok)))
 
         Spans = []
         Features = []
