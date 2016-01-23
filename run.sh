@@ -19,7 +19,7 @@ mode=$2
 
 export THEANO_FLAGS=mode=FAST_RUN,device=$1,floatX=float32
 
-python -u main_lasagne_multitask.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
+python -u main_lasagne_modality.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
                   			--minibatch $minibatch  --mode $mode
 
 

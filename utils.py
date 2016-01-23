@@ -13,13 +13,13 @@ tokenizer = nltk.tokenize.RegexpTokenizer('\w+|\$[\d\.]+|\S+')
 tagger = PerceptronTagger()
 
 
-DocTimeRel = {"BEFORE":"0", "OVERLAP":"1", "AFTER":"2", "BEFORE/OVERLAP":"3"}
-Type={"N/A":"0", "ASPECTUAL":"1", "EVIDENTIAL":"2"}
-Degree = {"N/A":"0", "MOST":"1", "LITTLE":"2"}
-Polarity = {"POS":"0", "NEG":"1"}
-ContextualModality = {"ACTUAL":"0", "HYPOTHETICAL":"1", "HEDGED":"2", "GENERIC":"3"}
-ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2"}
-Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2"}
+DocTimeRel = {"BEFORE":"0", "OVERLAP":"1", "AFTER":"2", "BEFORE/OVERLAP":"3", "UNK":"4"}
+Type={"N/A":"0", "ASPECTUAL":"1", "EVIDENTIAL":"2", "UNK":"3"}
+Degree = {"N/A":"0", "MOST":"1", "LITTLE":"2", "UNK":"3"}
+Polarity = {"POS":"0", "NEG":"1", "UNK":"2"}
+ContextualModality = {"ACTUAL":"0", "HYPOTHETICAL":"1", "HEDGED":"2", "GENERIC":"3", "UNK":"4"}
+ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2", "UNK":"3"}
+Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2", "UNK":"3"}
 
 def make_dirs(dirs):
     for d in dirs:
@@ -298,7 +298,7 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                             elif num_feats == 3:
                                 feats = feature_generation_3(content, span[0], span[1], window_size)
 
-                            negative_span_feat_map[span] = feats+"\t"+"0 0 0 0 0 0 0 0"
+                            negative_span_feat_map[span] = feats+"\t"+"0 4 3 3 2 4 3 3"
 
                     merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
                     shuffle(merged_spans)
@@ -424,7 +424,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    Y_labels = np.zeros((X.shape[0], 24))
+    Y_labels = np.zeros((X.shape[0], 31))
     for i in range(X.shape[0]):
 
         Y_labels[i, int(Event_label[i])] = 1
@@ -436,7 +436,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
         Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + int(ContextualAspect_label[i])] = 1
         Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + len(ContextualAspect) + int(Permanence_label[i])] = 1
 
-    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 24, "length error"
+    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 31, "length error"
 
     return X, Y_labels, seqlen, num_feats
 
