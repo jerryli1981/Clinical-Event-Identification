@@ -103,18 +103,7 @@ def loadWord2VecMap(word2vec_path):
 
 def content2tokens(content):
 
-    #toks = WhitespaceTokenizer.tokenize(content)
-    #toks = regexp_tokenize(content, pattern='[\w\/]+')
-    #toks = wordpunct_tokenize(content)
-    #toks = word_tokenize(content)
-    #toks = nltk.word_tokenize(content)
-
-    #sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
-    #sequence = re.sub("\\s{2,}", " ", sequence)
-    #toks = sequence.split(" ")
-
     toks = tokenizer.tokenize(content)
-
     w_toks = []
     for tok in toks:
         if not re.match(r'\w+', tok):
@@ -286,16 +275,11 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         content = f.read()
         Spans = content2span(content)
 
-        Features = []
-        for span in Spans:
-            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
-            Features.append(feats)
-
         X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
 
-        for i, feat in enumerate(Features):
-
-            toks_a = feat.split()
+        for i, span in enumerate(Spans):
+            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
+            toks_a = feats.split()
             step = 0
             for j in range(seqlen):
 
