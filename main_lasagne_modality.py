@@ -270,9 +270,9 @@ if __name__ == '__main__':
                 time.sleep(0.01)
                 pbar.update(i + 1)
 
-                _, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+                spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
 
-                totalPredEvents += len(features)
+                totalPredEvents += len(spans)
 
                 predict = pred_fn(features)
 
@@ -291,13 +291,12 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, label in enumerate(predict):
+                    for i, (span, label) in enumerate(zip(spans,predict)):
                         if label != 4:
                             totalCorrEvents += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                            #f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
-                            f.write("\t\t<span>"+"0,1"+"</span>\n")
+                            f.write("\t\t<span>"+str(span[i][0])+","+str(span[i][1])+"</span>\n")
                             f.write("\t\t<type>EVENT</type>\n")
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
