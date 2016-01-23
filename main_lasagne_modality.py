@@ -227,7 +227,7 @@ if __name__ == '__main__':
             print("training loss:\t\t{:.6f}".format(train_loss / train_batches))
 
             val_score = val_acc / val_batches * 100
-            print("alidation accuracy:\t\t{:.2f} %".format(val_score))
+            print("validation accuracy:\t\t{:.2f} %".format(val_score))
             if best_val_acc < val_score:
                 best_val_acc = val_score
                 save_network(model_save_path+".mod",get_all_param_values(network))
@@ -269,7 +269,7 @@ if __name__ == '__main__':
             for i, fn in enumerate(file_names):
                 time.sleep(0.01)
                 pbar.update(i + 1)
-                #print fn
+
                 _, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
 
                 totalPredEvents += len(features)
@@ -315,7 +315,6 @@ if __name__ == '__main__':
                             elif label == 3:
                                 f.write("\t\t\t<ContextualModality>"+"GENERIC"+"</ContextualModality>\n")
 
-                            f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
                             f.write("\t\t</properties>\n")
