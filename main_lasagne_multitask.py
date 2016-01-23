@@ -233,6 +233,7 @@ if __name__ == '__main__':
         X_dev, Y_labels_dev,_,_ = read_sequence_dataset_onehot(data_dir, "dev")
 
         print "window_size is %d"%((seqlen-1)/2)
+        print "number features is %d"%num_feats
 
         train_fn_span, val_fn_span, network_span, train_fn_dcr, val_fn_dcr, network_dcr, \
         train_fn_type, val_fn_type, network_type, train_fn_degree, val_fn_degree, network_degree, \
