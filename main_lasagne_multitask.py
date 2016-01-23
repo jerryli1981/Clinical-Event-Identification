@@ -223,7 +223,6 @@ if __name__ == '__main__':
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
-    wordEmbeddings = wordEmbeddings[:100, :]
 
     if args.mode == "train":
 
