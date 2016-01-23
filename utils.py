@@ -108,12 +108,22 @@ def loadWord2VecMap(word2vec_path):
 def content2tokens(content):
 
     #toks = WhitespaceTokenizer.tokenize(content)
-    toks = regexp_tokenize(content, pattern='[\w\/]+')
+    #toks = regexp_tokenize(content, pattern='[\w\/]+')
     #toks = wordpunct_tokenize(content)
     #toks = word_tokenize(content)
     #toks = nltk.word_tokenize(content)
 
-    return toks
+    sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
+    sequence = re.sub("\\s{2,}", " ", sequence)
+    toks = sequence.split(" ")
+
+    w_toks = []
+    for tok in toks:
+        if not re.match(r'\w+', tok):
+            continue
+        w_toks.append(tok)
+
+    return w_toks
 
 def content2span(content):
 
