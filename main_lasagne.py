@@ -392,11 +392,20 @@ if __name__ == '__main__':
 
         window_size = (seqlen-1)/2
 
+        totalPredEventSpans = 0
+        totalCorrEventSpans = 0
+
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
             for fn in file_names:
+                time.sleep(0.01)
+                pbar.update(i + 1)
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
+
+                totalPredEventSpans += len(spans)
 
                 predict_span = pred_fn_span(features)
 
@@ -420,6 +429,7 @@ if __name__ == '__main__':
                     #for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
                     for i, span_label in enumerate(predict_span):
                         if span_label == 1:
+                            totalCorrEventSpans += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                             f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
@@ -447,7 +457,11 @@ if __name__ == '__main__':
                             count += 1
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
+
+            pbar.finish()
                 
+        print "Total pred event span is %d"%totalPredEventSpans
+        print "Total corr event span is %d"%totalCorrEventSpans
 
         os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 
