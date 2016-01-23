@@ -136,7 +136,7 @@ def get_shape(tok):
 
     return shape
 
-def feature_generation(content, startoffset, endoffset, window_size=3, num_feats=2):
+def feature_generation_3(content, startoffset, endoffset, window_size=3):
 
     pre_content = content[0:startoffset-1]
     post_content=content[endoffset+1:]
@@ -178,6 +178,46 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
             shape = get_shape(tok)
 
         features.append(pos+" "+shape+" "+tok)
+
+    return " ".join(features)
+
+def feature_generation_2(content, startoffset, endoffset, window_size=3):
+
+    pre_content = content[0:startoffset-1]
+    post_content=content[endoffset+1:]
+
+    pre_list = content2tokens(pre_content)
+    if len(pre_list) < window_size:
+        for i in range(window_size-len(pre_list)):
+            pre_list.insert(i, "UNK")
+
+    post_list = content2tokens(post_content)
+    if len(post_list) < window_size:
+        for i in range(window_size-len(post_list)):
+            post_list.insert(i, "UNK")
+
+    features=[]
+    for tok in pre_list[-window_size:]:
+
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+
+        features.append(pos+" "+tok)
+
+    central_word = content[startoffset:endoffset]
+    central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
+    features.append(central_pos+" "+central_word)
+
+    for tok in post_list[0:window_size]:
+
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+
+        features.append(pos+" "+tok)
 
     return " ".join(features)
 
@@ -223,7 +263,11 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                                 
                             ext_positive += 1
 
-                            feats = feature_generation(content, startoffset, endoffset, window_size, num_feats)
+                            if num_feats == 2:
+                                feats = feature_generation_2(content, startoffset, endoffset, window_size)
+                            elif num_feats == 3:
+                                feats = feature_generation_3(content, startoffset, endoffset, window_size)
+
                             properties = annotation.properties
                             pros = {}
                             for pro_name in properties:
@@ -249,7 +293,11 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                     for span in all_spans:
                         if span not in positive_span_feat_map:
                             ext_negative += 1
-                            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
+                            if num_feats == 2:
+                                feats = feature_generation_2(content, span[0], span[1],, window_size)
+                            elif num_feats == 3:
+                                feats = feature_generation_3(content, span[0], span[1], window_size)
+
                             negative_span_feat_map[span] = feats+"\t"+"0 0 0 0 0 0 0 0"
 
                     merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
@@ -294,7 +342,12 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
 
         for i, span in enumerate(Spans):
-            feats = feature_generation(content, span[0], span[1], window_size, num_feats)
+
+            if num_feats == 2:
+                feats = feature_generation_2(content, span[0], span[1],, window_size)
+            elif num_feats == 3:
+                feats = feature_generation_3(content, span[0], span[1], window_size)
+
             toks_a = feats.split()
             step = 0
             for j in range(seqlen):
