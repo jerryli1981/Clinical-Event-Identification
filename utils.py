@@ -294,7 +294,7 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                         if span not in positive_span_feat_map:
                             ext_negative += 1
                             if num_feats == 2:
-                                feats = feature_generation_2(content, span[0], span[1],, window_size)
+                                feats = feature_generation_2(content, span[0], span[1], window_size)
                             elif num_feats == 3:
                                 feats = feature_generation_3(content, span[0], span[1], window_size)
 
@@ -344,7 +344,7 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
         for i, span in enumerate(Spans):
 
             if num_feats == 2:
-                feats = feature_generation_2(content, span[0], span[1],, window_size)
+                feats = feature_generation_2(content, span[0], span[1], window_size)
             elif num_feats == 3:
                 feats = feature_generation_3(content, span[0], span[1], window_size)
 
