@@ -269,6 +269,7 @@ if __name__ == '__main__':
         X_dev, Y_labels_dev,_,_ = read_sequence_dataset_onehot(data_dir, "dev")
 
         print "window_size is %d"%((seqlen-1)/2)
+        print "number features is %d"%num_feats
 
         train_fn_span, val_fn_span, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
