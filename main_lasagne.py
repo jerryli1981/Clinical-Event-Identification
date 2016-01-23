@@ -235,7 +235,7 @@ if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
 
-    model_dir = os.path.join(base_dir, 'models')
+    model_dir = os.path.join(base_dir, 'models_single')
     if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
@@ -259,6 +259,7 @@ if __name__ == '__main__':
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
+    wordEmbeddings = wordEmbeddings[:100, :]
 
     if args.mode == "train":
 
@@ -271,7 +272,7 @@ if __name__ == '__main__':
 
         train_fn_span, val_fn_span, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        train_fn_pol, val_fn_pol, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        #train_fn_pol, val_fn_pol, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
         best_val_acc_span = 0
@@ -296,7 +297,7 @@ if __name__ == '__main__':
                 inputs, labels= batch
 
                 train_loss_span += train_fn_span(inputs, labels[:,0:2])
-                train_loss_pol += train_fn_pol(inputs, labels[:,2:])
+                #train_loss_pol += train_fn_pol(inputs, labels[:,2:])
 
                 train_batches += 1
 
@@ -316,9 +317,11 @@ if __name__ == '__main__':
                 val_acc_span += acc_span
                 val_loss_span+= loss_span
 
+                """
                 loss_pol, acc_pol = val_fn_pol(inputs, labels[:,2:])
                 val_acc_pol += acc_pol
                 val_loss_pol += loss_pol
+                """
 
                 val_batches += 1
 
@@ -329,8 +332,8 @@ if __name__ == '__main__':
             print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
             print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
 
-            print("  span validation loss:\t\t{:.6f}".format(val_loss_span / val_batches))
-            print("  Polarity validation loss:\t\t{:.6f}".format(val_loss_pol / val_batches))
+            #print("  span validation loss:\t\t{:.6f}".format(val_loss_span / val_batches))
+            #print("  Polarity validation loss:\t\t{:.6f}".format(val_loss_pol / val_batches))
 
             val_score_span = val_acc_span / val_batches * 100
             print("  span validation accuracy:\t\t{:.2f} %".format(val_score_span))
@@ -338,11 +341,13 @@ if __name__ == '__main__':
                 best_val_acc_span = val_score_span
                 save_network(model_save_path+".span",get_all_param_values(network_span))
 
+            """
             val_score_pol = val_acc_pol / val_batches * 100
             print("  polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
             if best_val_acc_pol < val_score_pol:
                 best_val_acc_pol = val_score_pol
                 save_network(model_save_path+".pol",get_all_param_values(network_pol))
+            """
     
 
     elif args.mode == "test":
@@ -355,28 +360,29 @@ if __name__ == '__main__':
         
         _, _, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        _, _, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        #_, _, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
 
         print model_save_pre_path
         saved_params_span = load_network(model_save_pre_path+".span")
         set_all_param_values(network_span, saved_params_span)
 
-        saved_params_pol = load_network(model_save_pre_path+".pol")
-        set_all_param_values(network_pol, saved_params_pol)
+
+        #saved_params_pol = load_network(model_save_pre_path+".pol")
+        #set_all_param_values(network_pol, saved_params_pol)
 
 
         p_y_given_x_span = get_output(network_span, deterministic=True)
 
-        p_y_given_x_pol = get_output(network_pol, deterministic=True)
+        #p_y_given_x_pol = get_output(network_pol, deterministic=True)
 
         output_span = T.argmax(p_y_given_x_span, axis=1)
 
-        output_pol = T.argmax(p_y_given_x_pol, axis=1)
+        #output_pol = T.argmax(p_y_given_x_pol, axis=1)
 
         pred_fn_span = theano.function([input_var], output_span)
 
-        pred_fn_pol = theano.function([input_var], output_pol)
+        #pred_fn_pol = theano.function([input_var], output_pol)
         
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
@@ -394,7 +400,7 @@ if __name__ == '__main__':
 
                 predict_span = pred_fn_span(features)
 
-                predict_pol = pred_fn_pol(features)
+                #predict_pol = pred_fn_pol(features)
 
                 dn = os.path.join(output_dir, fn)
                 if not os.path.exists(dn):
@@ -423,13 +429,15 @@ if __name__ == '__main__':
                             f.write("\t\t\t<Type>N/A</Type>\n")
                             f.write("\t\t\t<Degree>N/A</Degree>\n")
                             
+                            """
                             if pol_label == 1:
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                             elif pol_label == 2:
                                 f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
                             else:
                                 f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            
+                            """
+                            f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                             f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
