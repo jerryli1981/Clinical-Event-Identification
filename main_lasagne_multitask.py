@@ -443,7 +443,12 @@ if __name__ == '__main__':
 
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
-            for fn in file_names:
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
+            for i, fn in enumerate(file_names):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
                 #print fn
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
                 totalPredEventSpans += len(spans)
@@ -555,7 +560,7 @@ if __name__ == '__main__':
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
                 
-                
+            pbar.finish()    
 
         print "Total pred event span is %d"%totalPredEventSpans
         print "Total corr event span is %d"%totalCorrEventSpans
