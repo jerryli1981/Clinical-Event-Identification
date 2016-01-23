@@ -330,7 +330,7 @@ if __name__ == '__main__':
                 epoch + 1, args.epochs, time.time() - start_time))
 
             print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
-            print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
+            #print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
 
             #print("  span validation loss:\t\t{:.6f}".format(val_loss_span / val_batches))
             #print("  Polarity validation loss:\t\t{:.6f}".format(val_loss_pol / val_batches))
@@ -417,7 +417,8 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                    #for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
+                    for i, span_label in enumerate(predict_span):
                         if span_label == 1:
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
