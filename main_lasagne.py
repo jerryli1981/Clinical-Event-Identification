@@ -400,7 +400,7 @@ if __name__ == '__main__':
 
             pbar = ProgressBar(maxval=len(file_names)).start()
 
-            for fn in file_names:
+            for i, fn in enumerate(file_names):
                 time.sleep(0.01)
                 pbar.update(i + 1)
                 #print fn
