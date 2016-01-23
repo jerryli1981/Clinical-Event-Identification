@@ -30,7 +30,7 @@ from lasagne.objectives import categorical_crossentropy, squared_error, categori
 from lasagne.updates import sgd, adagrad, adadelta, nesterov_momentum, rmsprop, adam
 from lasagne.init import GlorotUniform
 
-from utils2 import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
+from utils import read_sequence_dataset_onehot, iterate_minibatches_,loadWord2VecMap, generateTestInput
 
 def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats, lambda_val = 0.5 * 1e-4):
 
