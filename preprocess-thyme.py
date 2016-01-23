@@ -4,12 +4,12 @@ Preprocessing script for thyme data.
 """
 import os
 import glob
-from utils2 import preprocess_data, make_dirs, build_vocab, build_word2Vector
+from utils import preprocess_data, make_dirs, build_vocab, build_word2Vector
 
 if __name__ == '__main__':
 
-    window_size = 2
-    num_feats=2
+    window_size = 4
+    num_feats=3
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')

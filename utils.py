@@ -125,6 +125,17 @@ def content2span(content):
 
     return filt_spans
 
+def get_shape(tok):
+
+    if not tok.islower() and not tok.isupper():
+        shape= "Xx"
+    elif tok.islower():
+        shape = "x"
+    elif tok.isupper():
+        shape = "X"
+
+    return shape
+
 def feature_generation(content, startoffset, endoffset, window_size=3, num_feats=2):
 
     pre_content = content[0:startoffset-1]
@@ -145,23 +156,28 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
 
         if tok == "UNK":
             pos = "NN"
+            shape = "x"
         else:
             pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+            shape = get_shape(tok)
 
-        features.append(pos+" "+tok)
+        features.append(pos+" "+shape+" "+tok)
 
     central_word = content[startoffset:endoffset]
+    shape = get_shape(central_word)
     central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
-    features.append(central_pos+" "+central_word)
+    features.append(central_pos+" "+shape+" "+central_word)
 
     for tok in post_list[0:window_size]:
 
         if tok == "UNK":
             pos = "NN"
+            shape = "x"
         else:
             pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+            shape = get_shape(tok)
 
-        features.append(pos+" "+tok)
+        features.append(pos+" "+shape+" "+tok)
 
     return " ".join(features)
 
