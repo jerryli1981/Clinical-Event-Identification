@@ -358,6 +358,9 @@ if __name__ == '__main__':
         print("Loading model...")
         
         _, _,seqlen, num_feats = read_sequence_dataset_onehot(data_dir, "dev")
+
+        print "window_size is %d"%((seqlen-1)/2)
+        print "number features is %d"%num_feats
         
         _, _, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
