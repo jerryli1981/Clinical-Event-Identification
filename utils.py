@@ -7,16 +7,10 @@ import cPickle as pickle
 
 from nltk.tag.perceptron import PerceptronTagger
 
-from nltk.tokenize import regexp_tokenize, wordpunct_tokenize, WhitespaceTokenizer, word_tokenize
-
-from nltk.tokenize.util import regexp_span_tokenize
-
 from random import shuffle
 
-
-tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+|[^\w\s]+')
+tokenizer = nltk.tokenize.RegexpTokenizer('\w+|\$[\d\.]+|\S+')
 tagger = PerceptronTagger()
-WhitespaceTokenizer = WhitespaceTokenizer()
 
 
 DocTimeRel = {"BEFORE":"0", "OVERLAP":"1", "AFTER":"2", "BEFORE/OVERLAP":"3"}
@@ -131,8 +125,7 @@ def content2tokens(content):
 
 def content2span(content):
 
-    all_spans = regexp_span_tokenize(content, r'\w+|[^\w\s]+')
-    #all_spans = WhitespaceTokenizer.span_tokenize(content)
+    all_spans = tokenizer.span_tokenize(content)
 
     filt_spans = []
     for span in all_spans:
