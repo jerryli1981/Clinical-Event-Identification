@@ -214,7 +214,7 @@ if __name__ == '__main__':
 
                 inputs, labels= batch
 
-                loss, acc = val_fn(inputs, labels[:,0:2])
+                loss, acc = val_fn(inputs, labels[:,18:23])
                 val_acc += acc
                 val_loss += loss
 
