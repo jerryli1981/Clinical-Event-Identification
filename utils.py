@@ -13,6 +13,8 @@ from nltk.tokenize.util import regexp_span_tokenize
 
 from random import shuffle
 
+
+tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+|[^\w\s]+')
 tagger = PerceptronTagger()
 WhitespaceTokenizer = WhitespaceTokenizer()
 
@@ -113,9 +115,11 @@ def content2tokens(content):
     #toks = word_tokenize(content)
     #toks = nltk.word_tokenize(content)
 
-    sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
-    sequence = re.sub("\\s{2,}", " ", sequence)
-    toks = sequence.split(" ")
+    #sequence = " ".join([" ".join(nltk.word_tokenize(sent)) for sent in nltk.sent_tokenize(content)])
+    #sequence = re.sub("\\s{2,}", " ", sequence)
+    #toks = sequence.split(" ")
+
+    toks = tokenizer.tokenize(content)
 
     w_toks = []
     for tok in toks:
@@ -190,6 +194,63 @@ def feature_generation(content, startoffset, endoffset, window_size=3, num_feats
 
     return " ".join(features)
 
+def feature_generation_new(content, tokens, startoffset, endoffset, window_size=3, num_feats=2):
+
+    #pre_content = content[0:startoffset-1]
+    #post_content=content[endoffset+1:]
+
+    #pre_list = content2tokens(pre_content)
+
+    pre_list = []
+    s_offset = 0
+    for tok in tokens:
+        s_offset += len(tok)
+        if s_offset <= startoffset:
+            pre_list.append(tok)
+
+
+    if len(pre_list) < window_size:
+        for i in range(window_size-len(pre_list)):
+            pre_list.insert(i, "UNK")
+
+    #post_list = content2tokens(post_content)
+
+    post_list = []
+    e_offset = 0
+    for tok in tokens:
+        e_offset += len(tok)
+        if e_offset > endoffset:
+            post_list.append(tok)
+
+    if len(post_list) < window_size:
+        for i in range(window_size-len(post_list)):
+            post_list.insert(i, "UNK")
+
+    features=[]
+    for tok in pre_list[-window_size:]:
+
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+
+        features.append(pos+" "+tok)
+
+    central_word = content[startoffset:endoffset]
+    central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
+    features.append(central_pos+" "+central_word)
+
+    for tok in post_list[0:window_size]:
+
+        if tok == "UNK":
+            pos = "NN"
+        else:
+            pos = nltk.tag._pos_tag([tok], None, tagger)[0][1]
+
+        features.append(pos+" "+tok)
+
+    return " ".join(features)
+
 def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
     total_positive = 0
@@ -220,6 +281,8 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
 
                     content = f.read()
                     positive_span_feat_map={}
+
+                    #tokens = content2tokens(content)
 
                     for annotation in data.annotations:
                         if annotation.type == 'EVENT':
