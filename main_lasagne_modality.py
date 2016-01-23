@@ -291,12 +291,12 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, (span, label) in enumerate(zip(spans,predict)):
+                    for i, label in enumerate(predict):
                         if label != 4:
                             totalCorrEvents += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                            f.write("\t\t<span>"+str(span[i][0])+","+str(span[i][1])+"</span>\n")
+                            f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
                             f.write("\t\t<type>EVENT</type>\n")
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
