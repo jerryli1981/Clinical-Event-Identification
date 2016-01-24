@@ -119,95 +119,6 @@ def event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
 
     return train_fn, val_fn, network
 
-def event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats):
-
-    print("Building model with 1D Convolution")
-
-    vocab_size = wordEmbeddings.shape[1]
-    wordDim = wordEmbeddings.shape[0]
-
-    kw = 2
-    num_filters = seqlen-kw+1
-    stride = 1 
-
-    #important context words as channels
- 
-    #CNN_sentence config
-    filter_size=wordDim
-    pool_size=seqlen-filter_size+1
-
-    input = InputLayer((None, seqlen, num_feats),input_var=input_var)
-    batchsize, _, _ = input.input_var.shape
-    emb = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
-    #emb.params[emb.W].remove('trainable') #(batchsize, seqlen, wordDim)
-
-    #print get_output_shape(emb)
-    reshape = ReshapeLayer(emb, (batchsize, seqlen, num_feats*wordDim))
-    #print get_output_shape(reshape)
-
-    conv1d = Conv1DLayer(reshape, num_filters=num_filters, filter_size=wordDim, stride=1, 
-        nonlinearity=tanh,W=GlorotUniform()) #nOutputFrame = num_flters, 
-                                            #nOutputFrameSize = (num_feats*wordDim-filter_size)/stride +1
-
-    #print get_output_shape(conv1d)
-
-    conv1d = DimshuffleLayer(conv1d, (0,2,1))
-
-    #print get_output_shape(conv1d)
-
-    pool_size=num_filters
-
-    maxpool = MaxPool1DLayer(conv1d, pool_size=pool_size) 
-
-    #print get_output_shape(maxpool)
-  
-    #forward = FlattenLayer(maxpool) 
-
-    #print get_output_shape(forward)
- 
-    hid = DenseLayer(maxpool, num_units=args.hiddenDim, nonlinearity=sigmoid)
-
-    network = DenseLayer(hid, num_units=3, nonlinearity=softmax)
-
-    prediction = get_output(network)
-    
-    loss = T.mean(categorical_crossentropy(prediction,target_var))
-    lambda_val = 0.5 * 1e-4
-
-    layers = {emb:lambda_val, conv1d:lambda_val, hid:lambda_val, network:lambda_val} 
-    penalty = regularize_layer_params_weighted(layers, l2)
-    loss = loss + penalty
-
-
-    params = get_all_params(network, trainable=True)
-
-    if args.optimizer == "sgd":
-        updates = sgd(loss, params, learning_rate=args.step)
-    elif args.optimizer == "adagrad":
-        updates = adagrad(loss, params, learning_rate=args.step)
-    elif args.optimizer == "adadelta":
-        updates = adadelta(loss, params, learning_rate=args.step)
-    elif args.optimizer == "nesterov":
-        updates = nesterov_momentum(loss, params, learning_rate=args.step)
-    elif args.optimizer == "rms":
-        updates = rmsprop(loss, params, learning_rate=args.step)
-    elif args.optimizer == "adam":
-        updates = adam(loss, params, learning_rate=args.step)
-    else:
-        raise "Need set optimizer correctly"
- 
-    test_prediction = get_output(network, deterministic=True)
-    test_loss = T.mean(categorical_crossentropy(test_prediction,target_var))
-
-    train_fn = theano.function([input_var, target_var], 
-        loss, updates=updates, allow_input_downcast=True)
-
-    test_acc = T.mean(categorical_accuracy(test_prediction, target_var))
-    val_fn = theano.function([input_var, target_var], [test_loss, test_acc], allow_input_downcast=True)
-
-    return train_fn, val_fn, network
-
-
 def save_network(filename, param_values):
     with open(filename, 'wb') as f:
         cPickle.dump(param_values, f, protocol=cPickle.HIGHEST_PROTOCOL)
@@ -271,21 +182,17 @@ if __name__ == '__main__':
         print "window_size is %d"%((seqlen-1)/2)
         print "number features is %d"%num_feats
 
-        train_fn_span, val_fn_span, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
+        train_fn, val_fn, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        #train_fn_pol, val_fn_pol, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
-
-        print("Starting training...")
-        best_val_acc_span = 0
-        best_val_acc_pol = 0
+        print("Starting training modality model...")
+        best_val_acc = 0
 
         maxlen = 0
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
             maxlen += 1
 
         for epoch in range(args.epochs):
-            train_loss_span = 0
-            train_loss_pol = 0
+            train_loss = 0
             train_batches = 0
             start_time = time.time()
 
@@ -296,60 +203,48 @@ if __name__ == '__main__':
                 pbar.update(i + 1)
 
                 inputs, labels= batch
-
-                train_loss_span += train_fn_span(inputs, labels[:,0:2])
-                #train_loss_pol += train_fn_pol(inputs, labels[:,2:])
-
+                train_loss += train_fn(inputs, labels[:,0:2])
                 train_batches += 1
 
             pbar.finish()
      
-            val_loss_span = 0
-            val_acc_span = 0
-            val_loss_pol=0
-            val_acc_pol=0
+            val_loss = 0
+            val_acc = 0
             val_batches = 0
 
-            for batch in iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False):
+
+            maxlen = 0
+            for x in range(0, len(X_dev) - args.minibatch + 1, args.minibatch):
+                maxlen += 1
+
+            pbar = ProgressBar(maxval=maxlen).start()
+
+            #important, when the size of dev is big, need use minibatch instead of the whole dev, unless GpuDnnPool:error
+            for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), args.minibatch, shuffle=True)):
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 inputs, labels= batch
 
-                loss_span, acc_span = val_fn_span(inputs, labels[:,0:2])
-                val_acc_span += acc_span
-                val_loss_span+= loss_span
-
-                """
-                loss_pol, acc_pol = val_fn_pol(inputs, labels[:,2:])
-                val_acc_pol += acc_pol
-                val_loss_pol += loss_pol
-                """
+                loss, acc = val_fn(inputs, labels[:,0:2])
+                val_acc += acc
+                val_loss += loss
 
                 val_batches += 1
+
+            pbar.finish()
 
                 
             print("Epoch {} of {} took {:.3f}s".format(
                 epoch + 1, args.epochs, time.time() - start_time))
 
-            print("  span training loss:\t\t{:.6f}".format(train_loss_span / train_batches))
-            #print("  Polarity training loss:\t\t{:.6f}".format(train_loss_pol / train_batches))
+            print("training loss:\t\t{:.6f}".format(train_loss / train_batches))
 
-            #print("  span validation loss:\t\t{:.6f}".format(val_loss_span / val_batches))
-            #print("  Polarity validation loss:\t\t{:.6f}".format(val_loss_pol / val_batches))
-
-            val_score_span = val_acc_span / val_batches * 100
-            print("  span validation accuracy:\t\t{:.2f} %".format(val_score_span))
-            if best_val_acc_span < val_score_span:
-                best_val_acc_span = val_score_span
-                save_network(model_save_path+".span",get_all_param_values(network_span))
-
-            """
-            val_score_pol = val_acc_pol / val_batches * 100
-            print("  polarity validation accuracy:\t\t{:.2f} %".format(val_score_pol))
-            if best_val_acc_pol < val_score_pol:
-                best_val_acc_pol = val_score_pol
-                save_network(model_save_path+".pol",get_all_param_values(network_pol))
-            """
-    
+            val_score = val_acc / val_batches * 100
+            print("validation accuracy:\t\t{:.2f} %".format(val_score))
+            if best_val_acc < val_score:
+                best_val_acc = val_score
+                save_network(model_save_path+".span",get_all_param_values(network))
 
     elif args.mode == "test":
 
@@ -362,42 +257,24 @@ if __name__ == '__main__':
         print "window_size is %d"%((seqlen-1)/2)
         print "number features is %d"%num_feats
         
-        _, _, network_span = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
-
-        #_, _, network_pol = event_polarity_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
-
+        _, _, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print model_save_pre_path
-        saved_params_span = load_network(model_save_pre_path+".span")
-        set_all_param_values(network_span, saved_params_span)
+        saved_params = load_network(model_save_pre_path+".span")
+        set_all_param_values(network, saved_params)
 
-
-        #saved_params_pol = load_network(model_save_pre_path+".pol")
-        #set_all_param_values(network_pol, saved_params_pol)
-
-
-        p_y_given_x_span = get_output(network_span, deterministic=True)
-
-        #p_y_given_x_pol = get_output(network_pol, deterministic=True)
-
-        output_span = T.argmax(p_y_given_x_span, axis=1)
-
-        #output_pol = T.argmax(p_y_given_x_pol, axis=1)
-
-        pred_fn_span = theano.function([input_var], output_span)
-
-        #pred_fn_pol = theano.function([input_var], output_pol)
+        pred_fn = theano.function([input_var], T.argmax(get_output(network, deterministic=True), axis=1))
         
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
-        output_dir = os.path.join(base_dir, 'uta-output')
+        output_dir = os.path.join(base_dir, 'uta-output-span')
 
         input_text_test_dir = os.path.join(plain_dir, "test")
 
         window_size = (seqlen-1)/2
 
-        totalPredEventSpans = 0
-        totalCorrEventSpans = 0
+        totalPredEvents = 0
+        totalCorrEvents = 0
 
         for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
@@ -406,14 +283,12 @@ if __name__ == '__main__':
             for i, fn in enumerate(file_names):
                 time.sleep(0.01)
                 pbar.update(i + 1)
-                #print fn
+
                 spans, features = generateTestInput(data_dir, input_text_test_dir, fn, window_size, num_feats)
 
-                totalPredEventSpans += len(spans)
+                totalPredEvents += len(spans)
 
-                predict_span = pred_fn_span(features)
-
-                #predict_pol = pred_fn_pol(features)
+                predict = pred_fn(features)
 
                 dn = os.path.join(output_dir, fn)
                 if not os.path.exists(dn):
@@ -430,10 +305,9 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    #for i, (span_label,pol_label) in enumerate(zip(predict_span, predict_pol)):
-                    for i, span_label in enumerate(predict_span):
+                    for i, span_label in enumerate(predict):
                         if span_label == 1:
-                            totalCorrEventSpans += 1
+                            totalCorrEvents += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                             f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
@@ -443,17 +317,8 @@ if __name__ == '__main__':
                             f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
                             f.write("\t\t\t<Type>N/A</Type>\n")
                             f.write("\t\t\t<Degree>N/A</Degree>\n")
-                            
-                            """
-                            if pol_label == 1:
-                                f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                            elif pol_label == 2:
-                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            else:
-                                f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
-                            """
                             f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                            f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
+                            f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
                             f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                             f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
                             f.write("\t\t</properties>\n")
@@ -464,8 +329,8 @@ if __name__ == '__main__':
 
             pbar.finish()
                 
-        print "Total pred event span is %d"%totalPredEventSpans
-        print "Total corr event span is %d"%totalCorrEventSpans
+        print "Total pred events is %d"%totalPredEvents
+        print "Total corr events is %d"%totalCorrEvents
 
-        os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
+        #os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 

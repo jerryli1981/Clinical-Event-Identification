@@ -265,7 +265,7 @@ if __name__ == '__main__':
         
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
-        output_dir = os.path.join(base_dir, 'uta-output')
+        output_dir = os.path.join(base_dir, 'uta-output-modality')
 
         input_text_test_dir = os.path.join(plain_dir, "test")
 
