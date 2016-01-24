@@ -210,7 +210,11 @@ if __name__ == '__main__':
             val_acc = 0
             val_batches = 0
 
-            for batch in iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False):
+            pbar = ProgressBar(maxval=len(X_dev)).start()
+
+            for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), len(X_dev), shuffle=False)):
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 inputs, labels= batch
 
@@ -219,6 +223,8 @@ if __name__ == '__main__':
                 val_loss += loss
 
                 val_batches += 1
+
+            pbar.finish()
 
                 
             print("Epoch {} of {} took {:.3f}s".format(
