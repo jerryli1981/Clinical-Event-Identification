@@ -185,16 +185,16 @@ if __name__ == '__main__':
         print("Starting training modality model...")
         best_val_acc = 0
 
-        maxlen = 0
+        maxlen_train = 0
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
-            maxlen += 1
+            maxlen_train += 1
 
         for epoch in range(args.epochs):
             train_loss = 0
             train_batches = 0
             start_time = time.time()
 
-            pbar = ProgressBar(maxval=maxlen).start()
+            pbar = ProgressBar(maxval=maxlen_train).start()
             for i, batch in enumerate(iterate_minibatches_((X_train, Y_labels_train), args.minibatch, shuffle=True)):
 
                 time.sleep(0.01)
@@ -211,11 +211,11 @@ if __name__ == '__main__':
             val_batches = 0
 
 
-            maxlen = 0
+            maxlen_dev = 0
             for x in range(0, len(X_dev) - args.minibatch + 1, args.minibatch):
-                maxlen += 1
+                maxlen_dev += 1
 
-            pbar = ProgressBar(maxval=maxlen).start()
+            pbar = ProgressBar(maxval=maxlen_dev).start()
 
             #important, when the size of dev is big, need use minibatch instead of the whole dev, unless GpuDnnPool:error
             for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), args.minibatch, shuffle=True)):
