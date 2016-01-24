@@ -210,9 +210,14 @@ if __name__ == '__main__':
             val_acc = 0
             val_batches = 0
 
-            pbar = ProgressBar(maxval=len(X_dev)).start()
 
-            for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), args.minibatch, shuffle=False)):
+            maxlen = 0
+            for x in range(0, len(X_dev) - args.minibatch + 1, args.minibatch):
+                maxlen += 1
+
+            pbar = ProgressBar(maxval=len(maxlen)).start()
+
+            for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), args.minibatch, shuffle=True)):
                 time.sleep(0.01)
                 pbar.update(i + 1)
 
