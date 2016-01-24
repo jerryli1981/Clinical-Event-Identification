@@ -6,7 +6,7 @@ set -x
 ###################
 
 # training params
-epochs=1
+epochs=$4
 step=0.01
 hiddenDim=50
 minibatch=100
@@ -19,8 +19,23 @@ mode=$2
 
 export THEANO_FLAGS=mode=FAST_RUN,device=$1,floatX=float32
 
+
+if [ "$3" == "span" ]
+then
+echo "run span"
+
+
+python -u main_lasagne_span.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
+                  			--minibatch $minibatch  --mode $mode
+
+elif [ "$2" == "keras_graph" ]
+then
+echo "run modality"
+
 python -u main_lasagne_modality.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
                   			--minibatch $minibatch  --mode $mode
+
+fi
 
 
 
