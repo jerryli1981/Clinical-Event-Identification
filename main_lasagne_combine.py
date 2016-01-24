@@ -48,6 +48,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     input = InputLayer((None, seqlen, num_feats),input_var=input_var)
     batchsize, _, _ = input.input_var.shape
 
+    #span
     emb1 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape1 = ReshapeLayer(emb1, (batchsize, seqlen, num_feats*wordDim))
     conv1d_1 = DimshuffleLayer(Conv1DLayer(reshape1, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -57,6 +58,8 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     network_1 = DenseLayer(hid_1, num_units=2, nonlinearity=softmax)
 
 
+    """
+    #DocTimeRel
     emb2 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape2 = ReshapeLayer(emb2, (batchsize, seqlen, num_feats*wordDim))
     conv1d_2 = DimshuffleLayer(Conv1DLayer(reshape2, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -64,8 +67,9 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     maxpool_2 = MaxPool1DLayer(conv1d_2, pool_size=pool_size)  
     hid_2 = DenseLayer(maxpool_2, num_units=args.hiddenDim, nonlinearity=sigmoid)
     network_2 = DenseLayer(hid_2, num_units=5, nonlinearity=softmax)
+    """
 
-
+    #Type
     emb3 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape3 = ReshapeLayer(emb3, (batchsize, seqlen, num_feats*wordDim))
     conv1d_3 = DimshuffleLayer(Conv1DLayer(reshape3, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -75,6 +79,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     network_3 = DenseLayer(hid_3, num_units=4, nonlinearity=softmax)
 
 
+    #Degree
     emb4 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape4 = ReshapeLayer(emb4, (batchsize, seqlen, num_feats*wordDim))
     conv1d_4 = DimshuffleLayer(Conv1DLayer(reshape4, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -84,6 +89,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     network_4 = DenseLayer(hid_4, num_units=4, nonlinearity=softmax)
 
 
+    #Polarity
     emb5 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape5 = ReshapeLayer(emb5, (batchsize, seqlen, num_feats*wordDim))
     conv1d_5 = DimshuffleLayer(Conv1DLayer(reshape5, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -92,7 +98,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     hid_5 = DenseLayer(maxpool_5, num_units=args.hiddenDim, nonlinearity=sigmoid)
     network_5 = DenseLayer(hid_5, num_units=3, nonlinearity=softmax)
 
-
+    #ContextualModality
     emb6 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape6 = ReshapeLayer(emb6, (batchsize, seqlen, num_feats*wordDim))
     conv1d_6 = DimshuffleLayer(Conv1DLayer(reshape6, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -102,6 +108,8 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     network_6 = DenseLayer(hid_6, num_units=5, nonlinearity=softmax)
 
 
+    """
+    #ContextualAspect
     emb7 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape7 = ReshapeLayer(emb7, (batchsize, seqlen, num_feats*wordDim))
     conv1d_7 = DimshuffleLayer(Conv1DLayer(reshape7, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -109,7 +117,10 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     maxpool_7 = MaxPool1DLayer(conv1d_7, pool_size=pool_size)  
     hid_7 = DenseLayer(maxpool_7, num_units=args.hiddenDim, nonlinearity=sigmoid)
     network_7 = DenseLayer(hid_7, num_units=4, nonlinearity=softmax)
+    """
 
+    """
+    #Permanence
     emb8 = EmbeddingLayer(input, input_size=vocab_size, output_size=wordDim, W=wordEmbeddings.T)
     reshape8 = ReshapeLayer(emb8, (batchsize, seqlen, num_feats*wordDim))
     conv1d_8 = DimshuffleLayer(Conv1DLayer(reshape8, num_filters=num_filters, filter_size=wordDim, stride=1, 
@@ -117,12 +128,19 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     maxpool_8 = MaxPool1DLayer(conv1d_8, pool_size=pool_size)  
     hid_8 = DenseLayer(maxpool_8, num_units=args.hiddenDim, nonlinearity=sigmoid)
     network_8 = DenseLayer(hid_8, num_units=4, nonlinearity=softmax)
-
+    """
 
     # Is this important?
+    """
     network_1_out, network_2_out, network_3_out, network_4_out, \
     network_5_out, network_6_out, network_7_out, network_8_out = \
     get_output([network_1, network_2, network_3, network_4, network_5, network_6, network_7, network_8])
+    """
+    network_1_out = get_output(network_1)
+    network_3_out = get_output(network_3)
+    network_4_out = get_output(network_4)
+    network_5_out = get_output(network_5)
+    network_6_out = get_output(network_6)
 
     loss_1 = T.mean(binary_crossentropy(network_1_out,target_var)) + regularize_layer_params_weighted({emb1:lambda_val, conv1d_1:lambda_val, 
                 hid_1:lambda_val, network_1:lambda_val} , l2)
@@ -132,13 +150,14 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     val_fn_1 = theano.function([input_var, target_var], val_acc_1, allow_input_downcast=True)
 
 
+    """
     loss_2 = T.mean(categorical_crossentropy(network_2_out,target_var)) + regularize_layer_params_weighted({emb2:lambda_val, conv1d_2:lambda_val, 
                 hid_2:lambda_val, network_2:lambda_val} , l2)
     updates_2 = adagrad(loss_2, get_all_params(network_2, trainable=True), learning_rate=args.step)
     train_fn_2 = theano.function([input_var, target_var], loss_2, updates=updates_2, allow_input_downcast=True)
     val_acc_2 =  T.mean(categorical_accuracy(get_output(network_2, deterministic=True), target_var))
     val_fn_2 = theano.function([input_var, target_var], val_acc_2, allow_input_downcast=True)
-
+    """
 
     loss_3 = T.mean(categorical_crossentropy(network_3_out,target_var)) + regularize_layer_params_weighted({emb3:lambda_val, conv1d_3:lambda_val, 
                 hid_3:lambda_val, network_3:lambda_val} , l2)
@@ -169,6 +188,7 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     val_acc_6 =  T.mean(categorical_accuracy(get_output(network_6, deterministic=True), target_var))
     val_fn_6 = theano.function([input_var, target_var], val_acc_6, allow_input_downcast=True)
 
+    """
     loss_7 = T.mean(categorical_crossentropy(network_7_out,target_var)) + regularize_layer_params_weighted({emb7:lambda_val, conv1d_7:lambda_val, 
                 hid_7:lambda_val, network_7:lambda_val} , l2)
     updates_7 = adagrad(loss_7, get_all_params(network_7, trainable=True), learning_rate=args.step)
@@ -182,11 +202,16 @@ def multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, n
     train_fn_8 = theano.function([input_var, target_var], loss_8, updates=updates_8, allow_input_downcast=True)
     val_acc_8 =  T.mean(categorical_accuracy(get_output(network_8, deterministic=True), target_var))
     val_fn_8 = theano.function([input_var, target_var], val_acc_8, allow_input_downcast=True)
+    """
 
-
+    """
     return train_fn_1, val_fn_1, network_1, train_fn_2, val_fn_2, network_2, train_fn_3, val_fn_3, \
             network_3, train_fn_4, val_fn_4, network_4, train_fn_5, val_fn_5, network_5, \
             train_fn_6, val_fn_6, network_6, train_fn_7, val_fn_7, network_7, train_fn_8, val_fn_8, network_8
+    """
+    return train_fn_1, val_fn_1, network_1, train_fn_3, val_fn_3, \
+            network_3, train_fn_4, val_fn_4, network_4, train_fn_5, val_fn_5, network_5, \
+            train_fn_6, val_fn_6, network_6
 
 def save_network(filename, param_values):
     with open(filename, 'wb') as f:
@@ -251,21 +276,18 @@ if __name__ == '__main__':
         print "window_size is %d"%((seqlen-1)/2)
         print "number features is %d"%num_feats
 
-        train_fn_span, val_fn_span, network_span, train_fn_dcr, val_fn_dcr, network_dcr, \
+        train_fn_span, val_fn_span, network_span, \
         train_fn_type, val_fn_type, network_type, train_fn_degree, val_fn_degree, network_degree, \
-        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm, \
-        train_fn_ca, val_fn_ca, network_ca, train_fn_per, val_fn_per, network_per \
+        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm \
         = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
         print("Starting training...")
         best_val_acc_span = 0
-        best_val_acc_dcr = 0
         best_val_acc_type = 0
         best_val_acc_degree= 0
         best_val_acc_pol = 0
         best_val_acc_cm = 0
-        best_val_acc_ca = 0
-        best_val_acc_per = 0
+
 
         maxlen_train = 0
         for x in range(0, len(X_train) - args.minibatch + 1, args.minibatch):
@@ -273,13 +295,11 @@ if __name__ == '__main__':
 
         for epoch in range(args.epochs):
             train_loss_span = 0
-            train_loss_dcr = 0
             train_loss_type = 0
             train_loss_degree = 0
             train_loss_pol = 0
             train_loss_cm = 0
-            train_loss_ca = 0
-            train_loss_per = 0
+
             train_batches = 0
             start_time = time.time()
 
@@ -293,26 +313,21 @@ if __name__ == '__main__':
                 inputs, labels= batch
 
                 train_loss_span += train_fn_span(inputs, labels[:,0:2])
-                train_loss_dcr += train_fn_dcr(inputs, labels[:,2:7])
                 train_loss_type += train_fn_type(inputs, labels[:,7:11])
                 train_loss_degree += train_fn_degree(inputs, labels[:,11:15])
                 train_loss_pol += train_fn_pol(inputs, labels[:,15:18])
                 train_loss_cm += train_fn_cm(inputs, labels[:,18:23])
-                train_loss_ca += train_fn_ca(inputs, labels[:,23:27])
-                train_loss_per += train_fn_per(inputs, labels[:,27:31])
 
                 train_batches += 1
 
             pbar.finish()
 
             val_acc_span = 0
-            val_acc_dcr=0
             val_acc_type=0
             val_acc_degree=0
             val_acc_pol=0
             val_acc_cm=0
-            val_acc_ca =0
-            val_acc_per = 0
+
             val_batches = 0
 
             maxlen_dev = 0
@@ -328,13 +343,12 @@ if __name__ == '__main__':
                 inputs, labels= batch
 
                 val_acc_span += val_fn_span(inputs, labels[:,0:2])
-                val_acc_dcr += val_fn_dcr(inputs, labels[:,2:7])
+    
                 val_acc_type += val_fn_type(inputs, labels[:,7:11])
                 val_acc_degree += val_fn_degree(inputs, labels[:,11:15])
                 val_acc_pol += val_fn_pol(inputs, labels[:,15:18])
                 val_acc_cm += val_fn_cm(inputs, labels[:,18:23])
-                val_acc_ca += val_fn_ca(inputs, labels[:, 23:27])
-                val_acc_per += val_fn_per(inputs, labels[:, 27:31])
+
 
                 val_batches += 1
 
@@ -355,14 +369,12 @@ if __name__ == '__main__':
 
                 # get real performance
                 pred_fn_span = theano.function([input_var], T.argmax(get_output(network_span, deterministic=True), axis=1))
-                pred_fn_dcr = theano.function([input_var], T.argmax(get_output(network_dcr, deterministic=True), axis=1))
+
                 pred_fn_type = theano.function([input_var], T.argmax(get_output(network_type, deterministic=True), axis=1))
                 pred_fn_degree = theano.function([input_var], T.argmax(get_output(network_degree, deterministic=True), axis=1))
                 pred_fn_pol = theano.function([input_var], T.argmax(get_output(network_pol, deterministic=True), axis=1))
                 pred_fn_cm = theano.function([input_var], T.argmax(get_output(network_cm, deterministic=True), axis=1))
-                pred_fn_ca = theano.function([input_var], T.argmax(get_output(network_ca, deterministic=True), axis=1))
-                pred_fn_per = theano.function([input_var], T.argmax(get_output(network_per, deterministic=True), axis=1))
-
+                
                 ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
                 plain_dir = os.path.join(base_dir, 'original')
                 output_dir = os.path.join(base_dir, 'uta-output-validate')
@@ -384,13 +396,12 @@ if __name__ == '__main__':
                         spans, features = generateTestInput(data_dir, input_text_dev_dir, fn, window_size, num_feats)
                         totalPredEvents += len(spans)
                         predict_span = pred_fn_span(features)
-                        predict_dcr = pred_fn_dcr(features)
+
                         predict_type = pred_fn_type(features)
                         predict_degree = pred_fn_degree(features)
                         predict_pol = pred_fn_pol(features)
                         predict_cm = pred_fn_cm(features)
-                        predict_ca = pred_fn_ca(features)
-                        predict_per = pred_fn_per(features)
+
 
                         dn = os.path.join(output_dir, fn)
                         if not os.path.exists(dn):
@@ -407,8 +418,8 @@ if __name__ == '__main__':
                             f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                             f.write("<annotations>\n\n\n")
                             count=0
-                            for idx, (span_label, dcr_label, type_label, degree_label, pol_label, cm_label, ca_label, per_label) \
-                                in enumerate(zip(predict_span, predict_dcr, predict_type, predict_degree, predict_pol, predict_cm, predict_ca, predict_per)):
+                            for idx, (span_label, type_label, degree_label, pol_label, cm_label) \
+                                in enumerate(zip(predict_span, predict_type, predict_degree, predict_pol, predict_cm)):
                                 if span_label == 1:
                                     totalCorrEvents += 1
                                     f.write("\t<entity>\n")
@@ -417,17 +428,7 @@ if __name__ == '__main__':
                                     f.write("\t\t<type>EVENT</type>\n")
                                     f.write("\t\t<parentsType></parentsType>\n")
                                     f.write("\t\t<properties>\n")
-
-                                    if dcr_label == 0:
-                                        f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
-                                    elif dcr_label == 1:
-                                        f.write("\t\t\t<DocTimeRel>"+"OVERLAP"+"</DocTimeRel>\n")
-                                    elif dcr_label == 2:
-                                        f.write("\t\t\t<DocTimeRel>"+"AFTER"+"</DocTimeRel>\n")
-                                    elif dcr_label == 3:
-                                        f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
-                                    else:
-                                        f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
+                                    f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
 
                                     if type_label == 0:
                                         f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
@@ -465,23 +466,9 @@ if __name__ == '__main__':
                                     else:
                                         f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
 
-                                    if ca_label == 0:
-                                        f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
-                                    elif ca_label == 1:
-                                        f.write("\t\t\t<ContextualAspect>"+"NOVEL"+"</ContextualAspect>\n")
-                                    elif ca_label == 2:
-                                        f.write("\t\t\t<ContextualAspect>"+"INTERMITTENT"+"</ContextualAspect>\n")
-                                    else:
-                                        f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
 
-                                    if per_label == 0:
-                                        f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
-                                    elif per_label == 1:
-                                        f.write("\t\t\t<Permanence>"+"FINITE"+"</Permanence>\n")
-                                    elif per_label == 2:
-                                        f.write("\t\t\t<Permanence>"+"PERMANENT"+"</Permanence>\n")
-                                    else:
-                                        f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
+                                    f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
+                                    f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
 
                                     f.write("\t\t</properties>\n")
                                     f.write("\t</entity>\n\n")
@@ -497,13 +484,6 @@ if __name__ == '__main__':
                 os.system("python -m anafora.evaluate -r annotation/coloncancer/Dev/ -p uta-output-validate/")
 
 
-
-            print("Doc Time Rel training loss:\t\t{:.6f}".format(train_loss_dcr / train_batches))
-            val_score_dcr = val_acc_dcr / val_batches * 100
-            print("Doc Time Rel validation accuracy:\t\t{:.2f} %".format(val_score_dcr))
-            if best_val_acc_dcr < val_score_dcr:
-                best_val_acc_dcr = val_score_dcr
-                save_network(model_save_path+".dcr",get_all_param_values(network_dcr))
 
 
             print("Type training loss:\t\t{:.6f}".format(train_loss_type / train_batches))
@@ -536,19 +516,6 @@ if __name__ == '__main__':
                 best_val_acc_cm = val_score_cm
                 save_network(model_save_path+".cm",get_all_param_values(network_cm))
 
-            print("Contextual Aspect training loss:\t\t{:.6f}".format(train_loss_ca / train_batches))
-            val_score_ca = val_acc_ca / val_batches * 100
-            print("Contextual Aspect validation accuracy:\t\t{:.2f} %".format(val_score_ca))
-            if best_val_acc_ca < val_score_ca:
-                best_val_acc_ca = val_score_ca
-                save_network(model_save_path+".ca",get_all_param_values(network_ca))
-
-            print("Performance training loss:\t\t{:.6f}".format(train_loss_per / train_batches))
-            val_score_per = val_acc_per / val_batches * 100
-            print("Performance validation accuracy:\t\t{:.2f} %".format(val_score_per))
-            if best_val_acc_per < val_score_per:
-                best_val_acc_per = val_score_per
-                save_network(model_save_path+".per",get_all_param_values(network_per))
 
     elif args.mode == "test":
 
@@ -561,10 +528,9 @@ if __name__ == '__main__':
         print "number features is %d"%num_feats
 
         
-        train_fn_span, val_fn_span, network_span, train_fn_dcr, val_fn_dcr, network_dcr, \
+        train_fn_span, val_fn_span, network_span, \
         train_fn_type, val_fn_type, network_type, train_fn_degree, val_fn_degree, network_degree, \
-        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm, \
-        train_fn_ca, val_fn_ca, network_ca, train_fn_per, val_fn_per, network_per \
+        train_fn_pol, val_fn_pol, network_pol, train_fn_cm, val_fn_cm, network_cm \
         = multi_task_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
 
@@ -574,8 +540,6 @@ if __name__ == '__main__':
         saved_params_span = load_network(model_save_pre_path+".span")
         set_all_param_values(network_span, saved_params_span)
 
-        saved_params_dcr = load_network(model_save_pre_path+".dcr")
-        set_all_param_values(network_dcr, saved_params_dcr)
 
         saved_params_type = load_network(model_save_pre_path+".type")
         set_all_param_values(network_type, saved_params_type)
@@ -589,23 +553,15 @@ if __name__ == '__main__':
         saved_params_cm = load_network(model_save_pre_path+".cm")
         set_all_param_values(network_cm, saved_params_cm)
 
-        saved_params_ca = load_network(model_save_pre_path+".ca")
-        set_all_param_values(network_ca, saved_params_ca)
-
-        saved_params_per = load_network(model_save_pre_path+".per")
-        set_all_param_values(network_per, saved_params_per)
-
 
         pred_fn_span = theano.function([input_var], T.argmax(get_output(network_span, deterministic=True), axis=1))
-        pred_fn_dcr = theano.function([input_var], T.argmax(get_output(network_dcr, deterministic=True), axis=1))
+
         pred_fn_type = theano.function([input_var], T.argmax(get_output(network_type, deterministic=True), axis=1))
         pred_fn_degree = theano.function([input_var], T.argmax(get_output(network_degree, deterministic=True), axis=1))
         pred_fn_pol = theano.function([input_var], T.argmax(get_output(network_pol, deterministic=True), axis=1))
         pred_fn_cm = theano.function([input_var], T.argmax(get_output(network_cm, deterministic=True), axis=1))
-        pred_fn_ca = theano.function([input_var], T.argmax(get_output(network_ca, deterministic=True), axis=1))
-        pred_fn_per = theano.function([input_var], T.argmax(get_output(network_per, deterministic=True), axis=1))
-        
-        
+
+      
         ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
         plain_dir = os.path.join(base_dir, 'original')
         output_dir = os.path.join(base_dir, 'uta-output')
@@ -631,13 +587,11 @@ if __name__ == '__main__':
 
                 
                 predict_span = pred_fn_span(features)
-                predict_dcr = pred_fn_dcr(features)
                 predict_type = pred_fn_type(features)
                 predict_degree = pred_fn_degree(features)
                 predict_pol = pred_fn_pol(features)
                 predict_cm = pred_fn_cm(features)
-                predict_ca = pred_fn_ca(features)
-                predict_per = pred_fn_per(features)
+
 
                 dn = os.path.join(output_dir, fn)
                 if not os.path.exists(dn):
@@ -654,8 +608,8 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for idx, (span_label, dcr_label, type_label, degree_label, pol_label, cm_label, ca_label, per_label) \
-                        in enumerate(zip(predict_span, predict_dcr, predict_type, predict_degree, predict_pol, predict_cm, predict_ca, predict_per)):
+                    for idx, (span_label, type_label, degree_label, pol_label, cm_label) \
+                        in enumerate(zip(predict_span, predict_type, predict_degree, predict_pol, predict_cm)):
                         if span_label == 1:
                             totalCorrEventSpans += 1
                             f.write("\t<entity>\n")
@@ -664,17 +618,8 @@ if __name__ == '__main__':
                             f.write("\t\t<type>EVENT</type>\n")
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
+                            f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
 
-                            if dcr_label == 0:
-                                f.write("\t\t\t<DocTimeRel>"+"BEFORE"+"</DocTimeRel>\n")
-                            elif dcr_label == 1:
-                                f.write("\t\t\t<DocTimeRel>"+"OVERLAP"+"</DocTimeRel>\n")
-                            elif dcr_label == 2:
-                                f.write("\t\t\t<DocTimeRel>"+"AFTER"+"</DocTimeRel>\n")
-                            elif dcr_label == 3:
-                                f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
-                            else:
-                                f.write("\t\t\t<DocTimeRel>"+"BEFORE/OVERLAP"+"</DocTimeRel>\n")
 
                             if type_label == 0:
                                 f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
@@ -712,24 +657,8 @@ if __name__ == '__main__':
                             else:
                                 f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
 
-                            if ca_label == 0:
-                                f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
-                            elif ca_label == 1:
-                                f.write("\t\t\t<ContextualAspect>"+"NOVEL"+"</ContextualAspect>\n")
-                            elif ca_label == 2:
-                                f.write("\t\t\t<ContextualAspect>"+"INTERMITTENT"+"</ContextualAspect>\n")
-                            else:
-                                f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
-
-                            if per_label == 0:
-                                f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
-                            elif per_label == 1:
-                                f.write("\t\t\t<Permanence>"+"FINITE"+"</Permanence>\n")
-                            elif per_label == 2:
-                                f.write("\t\t\t<Permanence>"+"PERMANENT"+"</Permanence>\n")
-                            else:
-                                f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
-
+                            f.write("\t\t\t<ContextualAspect>"+"N/A"+"</ContextualAspect>\n")
+                            f.write("\t\t\t<Permanence>"+"UNDETERMINED"+"</Permanence>\n")
                             f.write("\t\t</properties>\n")
                             f.write("\t</entity>\n\n")
                             count += 1
