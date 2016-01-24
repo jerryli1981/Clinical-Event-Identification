@@ -412,7 +412,7 @@ if __name__ == '__main__':
                                     totalCorrEvents += 1
                                     f.write("\t<entity>\n")
                                     f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                                    f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                                    f.write("\t\t<span>"+str(spans[idx][0])+","+str(spans[idx][1])+"</span>\n")
                                     f.write("\t\t<type>EVENT</type>\n")
                                     f.write("\t\t<parentsType></parentsType>\n")
                                     f.write("\t\t<properties>\n")
@@ -653,13 +653,13 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, (span_label, dcr_label, type_label, degree_label, pol_label, cm_label, ca_label, per_label) \
+                    for idx, (span_label, dcr_label, type_label, degree_label, pol_label, cm_label, ca_label, per_label) \
                         in enumerate(zip(predict_span, predict_dcr, predict_type, predict_degree, predict_pol, predict_cm, predict_ca, predict_per)):
                         if span_label == 1:
                             totalCorrEventSpans += 1
                             f.write("\t<entity>\n")
                             f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                            f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                            f.write("\t\t<span>"+str(spans[idx][0])+","+str(spans[idx][1])+"</span>\n")
                             f.write("\t\t<type>EVENT</type>\n")
                             f.write("\t\t<parentsType></parentsType>\n")
                             f.write("\t\t<properties>\n")
