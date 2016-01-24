@@ -243,8 +243,8 @@ if __name__ == '__main__':
             print("validation accuracy:\t\t{:.2f} %".format(val_score))
             if best_val_acc < val_score:
                 best_val_acc = val_score
+                print "Saving model......"
                 save_network(model_save_path+".span",get_all_param_values(network))
-
 
                 # get real performance
                 pred_fn = theano.function([input_var], T.argmax(get_output(network, deterministic=True), axis=1))
@@ -285,12 +285,12 @@ if __name__ == '__main__':
                             f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                             f.write("<annotations>\n\n\n")
                             count=0
-                            for i, span_label in enumerate(predict):
+                            for idx, span_label in enumerate(predict):
                                 if span_label == 1:
                                     totalCorrEvents += 1
                                     f.write("\t<entity>\n")
                                     f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                                    f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                                    f.write("\t\t<span>"+str(spans[idx][0])+","+str(spans[idx][1])+"</span>\n")
                                     f.write("\t\t<type>EVENT</type>\n")
                                     f.write("\t\t<parentsType></parentsType>\n")
                                     f.write("\t\t<properties>\n")
