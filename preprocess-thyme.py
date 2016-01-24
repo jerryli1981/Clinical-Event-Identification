@@ -4,7 +4,7 @@ Preprocessing script for thyme data.
 """
 import os
 import glob
-from utils import preprocess_data, make_dirs, build_vocab, build_word2Vector
+from utils import preprocess_data, preprocess_test_data, make_dirs, build_vocab, build_word2Vector
 
 if __name__ == '__main__':
 
@@ -22,16 +22,23 @@ if __name__ == '__main__':
     test_dir = os.path.join(data_dir, 'test')
 
     make_dirs([train_dir, dev_dir, test_dir])
- 
+
+    
     preprocess_data(os.path.join(ann_dir, "Train"), os.path.join(plain_dir, "train"), 
         train_dir, window_size, num_feats)
     
     preprocess_data(os.path.join(ann_dir, "Dev"), os.path.join(plain_dir, "dev"), 
         dev_dir, window_size, num_feats)
+    
+    preprocess_test_data(os.path.join(plain_dir, "test"), test_dir, window_size, num_feats)
 
+
+    """
     preprocess_data(os.path.join(ann_dir, "Test"), os.path.join(plain_dir, "test"), 
         test_dir, window_size, num_feats)
+    """
 
+    
     build_vocab(
         glob.glob(os.path.join(data_dir, '*/*.toks')),
         os.path.join(data_dir, 'vocab-cased.txt'),

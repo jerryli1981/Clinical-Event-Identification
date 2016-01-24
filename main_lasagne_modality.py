@@ -327,5 +327,5 @@ if __name__ == '__main__':
         print "Total pred events is %d"%totalPredEvents
         print "Total corr events is %d"%totalCorrEvents
 
-        os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
+        #os.system("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p uta-output/")
 

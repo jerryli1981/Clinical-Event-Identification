@@ -316,6 +316,29 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
     print "Extract positive events is %d"%ext_positive
     print "Extract negative events is %d"%ext_negative
 
+def preprocess_test_data(input_text_dir, outDir, window_size=3, num_feats=2):
+
+    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature:
+
+        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
+
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
+
+            for fn in file_names:
+                print fn
+                with open(os.path.join(dir_path, fn), 'r') as f:
+                    content = f.read()
+                    Spans = content2span(content)
+
+                    for span in Spans:
+
+                        if num_feats == 2:
+                            feats = feature_generation_2(content, span[0], span[1], window_size)
+                        elif num_feats == 3:
+                            feats = feature_generation_3(content, span[0], span[1], window_size)
+
+                        g_feature.write(feats+"\n")
+
 
 # this method need keep for submit results
 def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
