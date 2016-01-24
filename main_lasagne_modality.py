@@ -215,8 +215,9 @@ if __name__ == '__main__':
             for x in range(0, len(X_dev) - args.minibatch + 1, args.minibatch):
                 maxlen += 1
 
-            pbar = ProgressBar(maxval=len(maxlen)).start()
+            pbar = ProgressBar(maxval=maxlen).start()
 
+            #important, when the size of dev is big, need use minibatch instead of the whole dev, unless GpuDnnPool:error
             for i, batch in enumerate(iterate_minibatches_((X_dev, Y_labels_dev), args.minibatch, shuffle=True)):
                 time.sleep(0.01)
                 pbar.update(i + 1)
