@@ -349,6 +349,7 @@ if __name__ == '__main__':
             print("span validation accuracy:\t\t{:.2f} %".format(val_score_span))
             if best_val_acc_span < val_score_span:
                 best_val_acc_span = val_score_span
+                print "Saving model......"
                 save_network(model_save_path+".span",get_all_param_values(network_span))
 
 
