@@ -418,7 +418,7 @@ def generateTestInput_Char(dataset_dir, test_dir, fn, window_size, num_feats, to
         content = f.read()
         Spans = content2span(content)
 
-        X = np.zeros((len(Spans), 50, 1), dtype=np.int16)
+        X = np.zeros((len(Spans), total_charachter, 1), dtype=np.int16)
 
         for i, span in enumerate(Spans):
 
