@@ -564,8 +564,6 @@ def read_char_encoding_sequence_dataset(dataset_dir, dataset_name, total_charach
 
     seqlen = 2*window_size+1
 
-    #X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
-
     X = np.zeros((data_size-1, total_charachter, 1), dtype=np.int16)
 
     from collections import defaultdict
@@ -638,7 +636,8 @@ def read_char_encoding_sequence_dataset(dataset_dir, dataset_name, total_charach
             else:
                 postcharseq = postcharseq[:right_window_size]
 
-            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter, "wrong sequence length"
+            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter,\
+             "wrong sequence length " + " ".join(toks_a) +" " + precharseq+" " + central_word + " " +postcharseq
 
             char_seq = precharseq+central_word+postcharseq
 

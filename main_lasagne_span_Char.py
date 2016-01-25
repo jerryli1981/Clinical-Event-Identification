@@ -171,7 +171,7 @@ if __name__ == '__main__':
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
 
-    char_seq_len = 20
+    char_seq_len = 30
     if args.mode == "train":
 
         print("Loading training data...")
@@ -180,7 +180,7 @@ if __name__ == '__main__':
         X_dev, Y_labels_dev,_,_ = read_char_encoding_sequence_dataset(data_dir, "dev", char_seq_len)
 
 
-        train_fn, val_fn, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, 50, 1)
+        train_fn, val_fn, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, char_seq_len, 1)
 
         print("Starting training span model...")
         best_val_acc = 0
