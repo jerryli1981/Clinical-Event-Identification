@@ -21,6 +21,7 @@ if __name__ == '__main__':
     dev_dir = os.path.join(data_dir, 'dev')
     test_dir = os.path.join(data_dir, 'test')
 
+    """
     make_dirs([train_dir, dev_dir, test_dir])
 
     
@@ -31,7 +32,7 @@ if __name__ == '__main__':
         dev_dir, window_size, num_feats)
     
     preprocess_test_data(os.path.join(plain_dir, "test"), test_dir, window_size, num_feats)
-
+    """
 
     """
     preprocess_data(os.path.join(ann_dir, "Test"), os.path.join(plain_dir, "test"), 

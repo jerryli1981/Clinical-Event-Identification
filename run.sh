@@ -25,7 +25,7 @@ then
 echo "run span"
 
 
-python -u main_lasagne_span.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
+python -u main_lasagne_span_Char.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
                   			--minibatch $minibatch  --mode $mode
 
 elif [ "$3" == "modality" ]

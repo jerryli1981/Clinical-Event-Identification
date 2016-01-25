@@ -484,8 +484,6 @@ if __name__ == '__main__':
                 os.system("python -m anafora.evaluate -r annotation/coloncancer/Dev/ -p uta-output-validate/")
 
 
-
-
             print("Type training loss:\t\t{:.6f}".format(train_loss_type / train_batches))
             val_score_type = val_acc_type / val_batches * 100
             print("Type validation accuracy:\t\t{:.2f} %".format(val_score_type))

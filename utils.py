@@ -21,6 +21,16 @@ ContextualModality = {"ACTUAL":"0", "HYPOTHETICAL":"1", "HEDGED":"2", "GENERIC":
 ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2", "UNK":"3"}
 Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2", "UNK":"3"}
 
+
+Alphabets_lower=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+             'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+
+Alphabets_upper=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
+             'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+
+Special = ['_', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '&', '/', '.', '-',
+ '(', ')', "'", ',', ":", '@', '#', '$', '%', '*', '!', '+', '[', ']', '{', '}', '|']
+
 def make_dirs(dirs):
     for d in dirs:
         if not os.path.exists(d):
@@ -34,6 +44,11 @@ def build_vocab(filepaths, dst_path, lowercase=True):
                 if lowercase:
                     line = line.lower()
                 vocab |= set(line.split())
+
+    vocab |= set(Alphabets_lower)
+    vocab |= set(Alphabets_upper)
+    vocab |= set(Special)
+
     with open(dst_path, 'w') as f:
         for w in sorted(vocab):
             f.write(w + '\n')
@@ -382,6 +397,77 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
 
         return Spans, X
 
+def generateTestInput_Char(dataset_dir, test_dir, fn, window_size, num_feats, total_charachter = 50):
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    seqlen = 2*window_size+1
+    with open(os.path.join(test_dir, fn), 'r') as f:
+
+        content = f.read()
+        Spans = content2span(content)
+
+        X = np.zeros((len(Spans), 50, 1), dtype=np.int16)
+
+        for i, span in enumerate(Spans):
+
+            if num_feats == 2:
+                feats = feature_generation_2(content, span[0], span[1], window_size)
+            elif num_feats == 3:
+                feats = feature_generation_3(content, span[0], span[1], window_size)
+
+            toks_a = feats.split()
+
+            toks = [ toks_a[i] for i in range(2,len(toks_a),3) ]
+            central_word = toks[4]
+            len_cw = len(central_word)
+            
+            if len_cw % 2 ==0:
+                left_window_size = (total_charachter-len_cw)/2
+                right_window_size = (total_charachter-len_cw)/2
+            else:
+                left_window_size = (total_charachter-len_cw)/2
+                right_window_size = left_window_size + 1
+
+            assert len_cw + left_window_size + right_window_size == total_charachter, "Wrong window_size"
+
+            pre_toks = toks[:4]
+            post_toks = toks[5:]
+
+            precharseq = "".join(pre_toks)
+            postcharseq = "".join(post_toks)
+
+            if len(precharseq) < left_window_size:
+                precharseq = "0"*(left_window_size-len(precharseq)) + precharseq
+            else:
+                precharseq = precharseq[-left_window_size:]
+
+
+            if len(postcharseq) < right_window_size:
+                postcharseq = postcharseq + "0"*(right_window_size-len(postcharseq))
+            else:
+                postcharseq = postcharseq[:right_window_size]
+
+            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter, "wrong sequence length"
+
+            char_seq = precharseq+central_word+postcharseq
+
+            for j in range(total_charachter):
+                X[i, j, 0] = vocab[char_seq[j]]
+            
+        return Spans, X
+
 
 def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
@@ -446,6 +532,119 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
                     X[i, j, k] = vocab[toks_a[step+k]]
 
                 step += num_feats
+         
+    Y_labels = np.zeros((X.shape[0], 31))
+    for i in range(X.shape[0]):
+
+        Y_labels[i, int(Event_label[i])] = 1
+        Y_labels[i, 2+int(DocTimeRel_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + int(Type_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + int(Degree_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + int(Polarity_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + int(ContextualAspect_label[i])] = 1
+        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + len(ContextualAspect) + int(Permanence_label[i])] = 1
+
+    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 31, "length error"
+
+    return X, Y_labels, seqlen, num_feats
+
+def read_char_encoding_sequence_dataset(dataset_dir, dataset_name, total_charachter = 50):
+
+    a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
+    labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
+
+    with open(a_s) as f:
+        num_feats, window_size = f.readline().strip().split('\t')
+
+    num_feats = int(num_feats)
+    window_size = int(window_size)
+
+    data_size = len([line.rstrip('\n') for line in open(a_s)])
+
+    seqlen = 2*window_size+1
+
+    #X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
+
+    X = np.zeros((data_size-1, total_charachter, 1), dtype=np.int16)
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    Event_label = []
+    DocTimeRel_label = []
+    Type_label = []
+    Degree_label = []
+    Polarity_label = []
+    ContextualModality_label = []
+    ContextualAspect_label = []
+    Permanence_label = []
+
+    with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
+        f1.readline()                 
+        for i, (a, label) in enumerate(zip(f1,f4)):
+
+            l0, l1, l2, l3, l4, l5, l6, l7 = label.rstrip('\n').split()
+            Event_label.append(l0)
+            DocTimeRel_label.append(l1)
+            Type_label.append(l2)
+            Degree_label.append(l3)
+            Polarity_label.append(l4)
+            ContextualModality_label.append(l5)
+            ContextualAspect_label.append(l6)
+            Permanence_label.append(l7)
+
+            toks_a = a.rstrip('\n').split()
+            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
+
+            #NN x colon NN x cancer TO x to NN x metastasize TO x to DT x the NN x distal NN x esophagus VBN Xx Given
+            toks = [ toks_a[i] for i in range(2,len(toks_a),3) ]
+            central_word = toks[4]
+            len_cw = len(central_word)
+            
+            if len_cw % 2 ==0:
+                left_window_size = (total_charachter-len_cw)/2
+                right_window_size = (total_charachter-len_cw)/2
+            else:
+                left_window_size = (total_charachter-len_cw)/2
+                right_window_size = left_window_size + 1
+
+            assert len_cw + left_window_size + right_window_size == total_charachter, "Wrong window_size"
+
+            pre_toks = toks[:4]
+            post_toks = toks[5:]
+
+            precharseq = "".join(pre_toks)
+            postcharseq = "".join(post_toks)
+
+            if len(precharseq) < left_window_size:
+                precharseq = "0"*(left_window_size-len(precharseq)) + precharseq
+            else:
+                precharseq = precharseq[-left_window_size:]
+
+
+            if len(postcharseq) < right_window_size:
+                postcharseq = postcharseq + "0"*(right_window_size-len(postcharseq))
+            else:
+                postcharseq = postcharseq[:right_window_size]
+
+            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter, "wrong sequence length"
+
+            char_seq = precharseq+central_word+postcharseq
+
+            for j in range(total_charachter):
+                X[i, j, 0] = vocab[char_seq[j]]
+
          
     Y_labels = np.zeros((X.shape[0], 31))
     for i in range(X.shape[0]):
