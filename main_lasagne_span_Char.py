@@ -171,12 +171,13 @@ if __name__ == '__main__':
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
     wordEmbeddings = wordEmbeddings.astype(np.float32)
 
+    char_seq_len = 20
     if args.mode == "train":
 
         print("Loading training data...")
 
-        X_train, Y_labels_train, seqlen, num_feats = read_char_encoding_sequence_dataset(data_dir, "train")
-        X_dev, Y_labels_dev,_,_ = read_char_encoding_sequence_dataset(data_dir, "dev")
+        X_train, Y_labels_train, seqlen, num_feats = read_char_encoding_sequence_dataset(data_dir, "train", char_seq_len)
+        X_dev, Y_labels_dev,_,_ = read_char_encoding_sequence_dataset(data_dir, "dev", char_seq_len)
 
 
         train_fn, val_fn, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, 50, 1)
@@ -267,7 +268,7 @@ if __name__ == '__main__':
                         time.sleep(0.01)
                         pbar.update(i + 1)
                         
-                        spans, features = generateTestInput_Char(data_dir, input_text_dev_dir, fn, window_size, num_feats)
+                        spans, features = generateTestInput_Char(data_dir, input_text_dev_dir, fn, window_size, num_feats, char_seq_len)
                         totalPredEvents += len(spans)
                         predict = pred_fn(features)
 
