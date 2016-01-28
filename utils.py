@@ -45,9 +45,9 @@ def build_vocab(filepaths, dst_path, lowercase=True):
                     line = line.lower()
                 vocab |= set(line.split())
 
-    vocab |= set(Alphabets_lower)
-    vocab |= set(Alphabets_upper)
-    vocab |= set(Special)
+    #vocab |= set(Alphabets_lower)
+    #vocab |= set(Alphabets_upper)
+    #vocab |= set(Special)
 
     with open(dst_path, 'w') as f:
         for w in sorted(vocab):
@@ -396,6 +396,68 @@ def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
                 step += num_feats
 
         return Spans, X
+
+def generateTestInput_phase2(dataset_dir, plain_test_dir, ann_test_dir, fn, window_size, num_feats):
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    seqlen = 2*window_size+1
+
+    Spans = []
+
+    for sub_dir, text_name, xml_names in anafora.walk(os.path.join(ann_test_dir, fn)):
+
+        print os.path.join(ann_test_dir, fn)
+
+        for xml_name in xml_names:
+
+            if "Temporal" not in xml_name:
+                continue
+                
+            xml_path = os.path.join(ann_test_dir, text_name, xml_name)
+            data = anafora.AnaforaData.from_file(xml_path)
+
+            for annotation in data.annotations:
+                if annotation.type == 'EVENT':
+
+                    startoffset = annotation.spans[0][0]
+                    endoffset = annotation.spans[0][1]
+
+                    Spans.append((startoffset,endoffset))
+
+    with open(os.path.join(plain_test_dir, fn), 'r') as f:
+        content = f.read()
+
+    X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
+
+    for i, span in enumerate(Spans):
+
+        if num_feats == 2:
+            feats = feature_generation_2(content, span[0], span[1], window_size)
+        elif num_feats == 3:
+            feats = feature_generation_3(content, span[0], span[1], window_size)
+
+        toks_a = feats.split()
+        step = 0
+        for j in range(seqlen):
+
+            for k in range(num_feats):
+                X[i, j, k] = vocab[toks_a[step+k]]
+
+            step += num_feats
+
+    return Spans, X
 
 def generateTestInput_Char(dataset_dir, test_dir, fn, window_size, num_feats, total_charachter = 50):
 
