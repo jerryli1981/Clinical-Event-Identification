@@ -304,6 +304,8 @@ if __name__ == '__main__':
                                     f.write("\t\t\t<DocTimeRel>AFTER</DocTimeRel>\n")
                                 elif dr_label == 3:
                                     f.write("\t\t\t<DocTimeRel>BEFORE/OVERLAP</DocTimeRel>\n")
+                                else:
+                                    f.write("\t\t\t<DocTimeRel>OVERLAP</DocTimeRel>\n")
 
                                 f.write("\t\t\t<Type>N/A</Type>\n")
                                 f.write("\t\t\t<Degree>N/A</Degree>\n")
@@ -355,13 +357,16 @@ if __name__ == '__main__':
 
         input_ann_test_dir = os.path.join(ann_dir, "Test")
 
+
         for dir_path, dir_names, file_names in os.walk(input_ann_test_dir):
 
-            pbar = ProgressBar(maxval=len(dir_names)).start()
+            #pbar = ProgressBar(maxval=len(dir_names)).start()
 
             for i, fn in enumerate(dir_names):
-                time.sleep(0.01)
-                pbar.update(i + 1)
+
+                #time.sleep(0.01)
+                #pbar.update(i + 1)
+                print fn
 
                 spans, features = generateTestInput_phase2(data_dir, input_text_test_dir, input_ann_test_dir, fn, window_size, num_feats)
 
@@ -382,10 +387,10 @@ if __name__ == '__main__':
                     f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                     f.write("<annotations>\n\n\n")
                     count=0
-                    for i, dr_label in enumerate(predict):
+                    for idx, dr_label in enumerate(predict):
                         f.write("\t<entity>\n")
                         f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                        f.write("\t\t<span>"+str(spans[i][0])+","+str(spans[i][1])+"</span>\n")
+                        f.write("\t\t<span>"+str(spans[idx][0])+","+str(spans[idx][1])+"</span>\n")
                         f.write("\t\t<type>EVENT</type>\n")
                         f.write("\t\t<parentsType></parentsType>\n")
                         f.write("\t\t<properties>\n")
@@ -398,6 +403,8 @@ if __name__ == '__main__':
                             f.write("\t\t\t<DocTimeRel>AFTER</DocTimeRel>\n")
                         elif dr_label == 3:
                             f.write("\t\t\t<DocTimeRel>BEFORE/OVERLAP</DocTimeRel>\n")
+                        else:
+                            f.write("\t\t\t<DocTimeRel>OVERLAP</DocTimeRel>\n")
 
                         f.write("\t\t\t<Type>N/A</Type>\n")
                         f.write("\t\t\t<Degree>N/A</Degree>\n")
@@ -405,6 +412,7 @@ if __name__ == '__main__':
                         f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
                         f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                         f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
+
                         f.write("\t\t</properties>\n")
                         f.write("\t</entity>\n\n")
                         count += 1
@@ -412,6 +420,6 @@ if __name__ == '__main__':
                     f.write("\n\n</annotations>\n")
                     f.write("</data>")
 
-            pbar.finish()
+            #pbar.finish()
         
 
