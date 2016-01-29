@@ -423,7 +423,7 @@ def generateTestInput_phase2(dataset_dir, plain_test_dir, ann_test_dir, fn, wind
 
     for sub_dir, text_name, xml_names in anafora.walk(os.path.join(ann_test_dir, fn)):
 
-        print os.path.join(ann_test_dir, fn)
+        #print os.path.join(ann_test_dir, fn)
 
         for xml_name in xml_names:
 
