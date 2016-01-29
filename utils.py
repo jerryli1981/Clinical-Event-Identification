@@ -359,6 +359,50 @@ def preprocess_test_data(input_text_dir, outDir, window_size=3, num_feats=2):
 
                         g_feature.write(feats+"\n")
 
+def preprocess_test_data_phase2(input_text_dir, input_ann_dir, outDir, window_size=3, num_feats=2):
+
+    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature:
+
+        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
+
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
+
+            for fn in file_names:
+
+                print fn
+
+                Spans = []
+
+                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
+
+                    for xml_name in xml_names:
+
+                        if "Temporal" not in xml_name:
+                            continue
+
+                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
+                        data = anafora.AnaforaData.from_file(xml_path)
+
+                        for annotation in data.annotations:
+                            if annotation.type == 'EVENT':
+
+                                startoffset = annotation.spans[0][0]
+                                endoffset = annotation.spans[0][1]
+
+                                Spans.append((startoffset,endoffset))
+
+                with open(os.path.join(input_text_dir, fn), 'r') as f:
+                    content = f.read()
+
+                for i, span in enumerate(Spans):
+
+                    if num_feats == 2:
+                        feats = feature_generation_2(content, span[0], span[1], window_size)
+                    elif num_feats == 3:
+                        feats = feature_generation_3(content, span[0], span[1], window_size)
+
+                    g_feature.write(feats+"\n")
+
 
 # this method need keep for submit results
 def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
