@@ -179,6 +179,10 @@ def feature_generation_3(content, startoffset, endoffset, window_size=3):
         features.append(pos+" "+shape+" "+tok)
 
     central_word = content[startoffset:endoffset]
+
+    if " " in central_word:
+        central_word = re.sub(r" ", "_", central_word)
+
     shape = get_shape(central_word)
     central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
     features.append(central_pos+" "+shape+" "+central_word)
@@ -222,6 +226,9 @@ def feature_generation_2(content, startoffset, endoffset, window_size=3):
         features.append(pos+" "+tok)
 
     central_word = content[startoffset:endoffset]
+    if " " in central_word:
+        central_word = re.sub(r" ", "_", central_word)
+
     central_pos = nltk.tag._pos_tag([central_word], None, tagger)[0][1]
     features.append(central_pos+" "+central_word)
 
@@ -273,9 +280,7 @@ def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_fe
                             total_positive +=1
                             startoffset = annotation.spans[0][0]
                             endoffset = annotation.spans[0][1]
-                            if " " in content[startoffset:endoffset]:
-                                continue
-                                
+
                             ext_positive += 1
 
                             if num_feats == 2:
@@ -424,7 +429,7 @@ def generateTestInput_phase2(dataset_dir, plain_test_dir, ann_test_dir, fn, wind
 
             if "Temporal" not in xml_name:
                 continue
-                
+
             xml_path = os.path.join(ann_test_dir, text_name, xml_name)
             data = anafora.AnaforaData.from_file(xml_path)
 
