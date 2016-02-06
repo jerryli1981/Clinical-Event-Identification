@@ -16,7 +16,7 @@ function main.main()
 
 	main.clock = {}
    	main.clock.log = 0
-   	
+
 	main.argparse()
 	main.new()
 	main.run()
@@ -67,6 +67,8 @@ function main.new()
 
 	print("Loading the tester...")
 	main.test_val = Test(main.val_data, main.model, config.loss(), config.test)
+
+	collectgarbage()
 end
 
 function main.run()
@@ -89,6 +91,9 @@ function main.run()
 			print("Testing on test data for era " .. i)
   			main.test_val:run(main.testlog)
   		end
+
+  		print("val_error is"..string.format("%.2e",main.test_val.e))
+
   	end
 end
 

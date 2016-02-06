@@ -11,13 +11,13 @@ local Data = torch.class("Data")
 
 function Data:__init(config)
    -- Alphabet settings
-   self.alphabet = config.alphabet or "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+-=<>()[]{}"
+   self.alphabet = config.alphabet
    self.dict = {}
    for i = 1,#self.alphabet do
       self.dict[self.alphabet:sub(i,i)] = i
    end
 
-   self.length = config.length or 1014
+   self.length = config.length
    self.batch_size = config.batch_size or 128
    self.file = config.file
    self.prob = config.prob
