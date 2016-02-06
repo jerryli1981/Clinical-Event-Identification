@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 The THYME Corpus
 =========
 
@@ -59,3 +60,8 @@ Each XML file should be read with its labeled source text file (so doc0002_CLIN.
 ### Line Endings
 
 Because all annotations are stored as offsets, *you must be extremely careful not to modify the source text in any way*. The most common source of error comes from Windows machines changing the Unix line endings to Windows line endings when opening or unzipping the source files.  For this reason, we recommend the use of [7-zip](http://www.7-zip.org) for unzipping the source files on Windows machines, and the careful handling of those source files during any time they may spend outside of a *nix system.
+=======
+# KDD2016
+1. generate csv data
+2. generate t7b data
+>>>>>>> d040f15ed06efcaabe1e94b290e35c7ac21de57f
