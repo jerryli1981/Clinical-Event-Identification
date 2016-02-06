@@ -27,30 +27,31 @@ main = {}
 
 -- The main program
 function main.main()
+
+   opt = main.argparse()
    -- Setting the device
-   if config.main.device then
+   if opt.device > 0 then
       require("cutorch")
       require("cunn")
-      cutorch.setDevice(config.main.device)
-      print("Device set to "..config.main.device)
+      cutorch.setDevice(opt.device)
+      print("Device set to ".. opt.device)
    end
 
-   if config.main.debug then
+   if opt.debug > 0 then
       dbg = require("debugger")
    end
 
    main.clock = {}
    main.clock.log = 0
-   opt = main.argparse()
+   
 
-   if opt.resume > 0 then
+   if opt.test > 0 then
       main.test()
    else
       main.new()
       main.run()
    end
-
-   
+ 
 end
 
 -- Parse arguments
@@ -59,10 +60,32 @@ function main.argparse()
 
    -- Options
    cmd:option("-resume",0,"Resumption point in epoch. 0 means not resumption.")
+   cmd:option("-test",0,"test. 0 means not test.")
+   cmd:option("-debug",0,"debug. 0 means not debug.")
+   cmd:option("-device",0,"device. 0 means cpu.")
    cmd:text()
-   
+
    -- Parse the option
    local opt = cmd:parse(arg or {})
+
+   -- Resumption operation
+   if opt.resume > 0 then
+      -- Find the main resumption file
+      config.main.resume = config.main.save .. "main_"..tostring(opt.resume)..".t7b"
+      print("Using main resumption point "..config.main.resume)
+      -- Find the model resumption file
+      config.model.file = config.main.save .. "sequential_"..tostring(opt.resume)..".t7b"
+      print("Using model resumption point "..config.model.file)
+      -- Resume the training epoch
+      config.train.epoch = tonumber(opt.resume) + 1
+      print("Next training epoch resumed to "..config.train.epoch)
+      -- Don't do randomize
+      if config.main.randomize then
+         config.main.randomize = nil
+         print("Disabled randomization for resumption")
+      end
+   end
+
    return opt
 end
 
