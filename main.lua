@@ -168,6 +168,10 @@ function main.test()
    print("Begin Testing ....")
    -- Load the model
    print("Loading the model...")
+   if config.model.file == nil then
+      error("need set model file")
+   end
+
    main.model = Model(config.model)
    main.model:type(config.main.type)
 
@@ -178,7 +182,18 @@ function main.test()
 
    main.test = Test(main.test_data, main.model, config.loss(), config.test)
    main.test:run(main.testlog)
-   preds = main.test.predLabels -- 18990 types
+   preds = main.test.predLabels
+
+   local preds_out = torch.DiskFile(paths.cwd() .. "/decisions.txt", 'w')
+   for i = 1, preds:size(1) do
+    preds_out:writeString(preds[i] .. "\n")
+   end
+   print("predicted events is: " .. preds:size(1)) -- 96326
+   preds_out:close()
+
+   os.execute("python makeEvaluation.py")
+
+   --[[
 
    fs = paths.iterdirs(paths.cwd() .. "/annotation/coloncancer/Test")
    idx = 0
@@ -192,8 +207,13 @@ function main.test()
    for i=1, #allcase do
       fn = allcase[i]
       f_dir = paths.cwd() .. "/annotation/coloncancer/Test/" .. fn
-      out_dir = paths.cwd() .. "/output/" .. fn
 
+      output_dir = paths.cwd() .. "/output"
+      if lfs.attributes(output_dir) == nil then
+         lfs.mkdir(output_dir)
+      end
+
+      out_dir = output_dir .. "/" .. fn
       if lfs.attributes(out_dir) == nil then
          lfs.mkdir(out_dir)
       end
@@ -208,13 +228,11 @@ function main.test()
          end
       end
 
-      x_n_out = torch.DiskFile(out_dir .. "/" .. xml, 'w')
-
+      local x_n_out = torch.DiskFile(out_dir .. "/" .. xml, 'w')
       local file = io.open(f_dir .. "/" .. xml, 'r')
-      local line
 
       while true do
-       line = file:read()
+       local line = file:read()
        if line == nil then break end
 
        if string.find(line, "<Type>N/A</Type>") or 
@@ -248,11 +266,17 @@ function main.test()
    end
 
    os.execute("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p output")
+   --]]
+
 end
 
 function main.save()
    -- Record necessary configurations
    config.train.epoch = main.train.epoch
+
+   if lfs.attributes(config.main.save) == nil then
+         lfs.mkdir(config.main.save)
+   end
 
    -- Make the save
    local time = os.time()

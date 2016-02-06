@@ -22,15 +22,6 @@ ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2", "UNK":"3"}
 Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2", "UNK":"3"}
 
 
-Alphabets_lower=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
-             'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-
-Alphabets_upper=['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
-             'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-
-Special = ['_', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '&', '/', '.', '-',
- '(', ')', "'", ',', ":", '@', '#', '$', '%', '*', '!', '+', '[', ']', '{', '}', '|']
-
 def make_dirs(dirs):
     for d in dirs:
         if not os.path.exists(d):
@@ -44,10 +35,6 @@ def build_vocab(filepaths, dst_path, lowercase=True):
                 if lowercase:
                     line = line.lower()
                 vocab |= set(line.split())
-
-    #vocab |= set(Alphabets_lower)
-    #vocab |= set(Alphabets_upper)
-    #vocab |= set(Special)
 
     with open(dst_path, 'w') as f:
         for w in sorted(vocab):
