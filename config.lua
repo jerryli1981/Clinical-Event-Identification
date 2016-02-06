@@ -83,7 +83,7 @@ config.mui.n = 16
 
 -- Main program
 config.main = {}
-config.main.type = "torch.DoubleTensor"
+config.main.type = "torch.CudaTensor"
 config.main.eras = 10
 config.main.epoches = 10
 config.main.randomize = 5e-2
