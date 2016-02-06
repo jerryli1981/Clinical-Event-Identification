@@ -87,7 +87,6 @@ config.test.confusion = true
 
 -- Main program
 config.main = {}
-config.main.type = "torch.CudaTensor"
 config.main.eras = 1
 config.main.epoches = 1000
 config.main.randomize = 5e-2

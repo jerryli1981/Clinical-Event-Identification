@@ -35,6 +35,9 @@ function main.main()
       require("cunn")
       cutorch.setDevice(opt.device)
       print("Device set to ".. opt.device)
+      config.main.type = "torch.CudaTensor"
+   else
+      config.main.type = "torch.DoubleTensor"
    end
 
    if opt.debug > 0 then
