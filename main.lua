@@ -63,6 +63,7 @@ function main.argparse()
    cmd:option("-test",0,"test. 0 means not test.")
    cmd:option("-debug",0,"debug. 0 means not debug.")
    cmd:option("-device",0,"device. 0 means cpu.")
+   cmd:option("-lastepoch",0,"last epoch")
    cmd:text()
 
    -- Parse the option
@@ -71,10 +72,10 @@ function main.argparse()
    -- Resumption operation
    if opt.resume > 0 then
       -- Find the main resumption file
-      config.main.resume = config.main.save .. "/main_"..tostring(opt.resume)..".t7b"
+      config.main.resume = config.main.save .. "/main_"..tostring(opt.lastepoch)..".t7b"
       print("Using main resumption point "..config.main.resume)
       -- Find the model resumption file
-      config.model.file = config.main.save .. "/sequential_"..tostring(opt.resume)..".t7b"
+      config.model.file = config.main.save .. "/sequential_"..tostring(opt.lastepoch)..".t7b"
       print("Using model resumption point "..config.model.file)
       -- Resume the training epoch
       config.train.epoch = tonumber(opt.resume) + 1
@@ -155,8 +156,8 @@ end
 
 function main.test()
 
-   config.model.file = config.main.save .. "/sequential_"..tostring(opt.resume)..".t7b"
-   print("Using model resumption point "..config.model.file)
+   config.model.file = config.main.save .. "/sequential_"..tostring(opt.lastepoch)..".t7b"
+   print("Using model  "..config.model.file)
 
    -- Load the model
    print("Loading the model...")
