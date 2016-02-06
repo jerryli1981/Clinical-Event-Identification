@@ -31,6 +31,8 @@ function Test:__init(data,model,loss,config)
       self.confusion = torch.zeros(data:nClasses(),data:nClasses())
    end
 
+   self.predLabels = torch.zeros(data.data["size"])
+
    -- Store configurations
    self.normalize = config.normalize
 end
@@ -41,6 +43,7 @@ function Test:run(logfunc)
    self.e = 0
    self.l = 0
    self.n = 0
+
    if self.confusion then self.confusion:zero() end
 
    -- Start the loop
@@ -72,9 +75,10 @@ function Test:run(logfunc)
       self.e = self.e*(self.n/(self.n+n)) +  self.err*(n/(self.n+n))
       self.l = self.l*(self.n/(self.n+n)) + self.objective*(n/(self.n+n))
       if self.confusion then
-	 for i = 1,n do
-	    self.confusion[labels[i]][self.decision[i]] = self.confusion[labels[i]][self.decision[i]]+1
-	 end
+      	 for i = 1,n do
+      	    self.confusion[labels[i]][self.decision[i]] = self.confusion[labels[i]][self.decision[i]]+1
+             self.predLabels[self.n+i] = self.decision[i]
+      	 end
       end
       self.n = self.n + n
       -- Record time

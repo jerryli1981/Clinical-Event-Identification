@@ -1,100 +1,222 @@
+--[[
+Main Driver for Crepe
+By Xiang Zhang @ New York University
+]]
+
+-- Necessary functionalities
+require("nn")
+
+
+-- Local requires
 require("data")
 require("model")
 require("train")
 require("test")
 
+require('lfs')
+
+-- Configurations
 dofile("config.lua")
 
 -- Prepare random number generator
 math.randomseed(os.time())
 torch.manualSeed(os.time())
 
-
+-- Create namespaces
 main = {}
 
+-- The main program
 function main.main()
+   -- Setting the device
+   if config.main.device then
+      require("cutorch")
+      require("cunn")
+      cutorch.setDevice(config.main.device)
+      print("Device set to "..config.main.device)
+   end
 
-	main.clock = {}
-   	main.clock.log = 0
+   if config.main.debug then
+      dbg = require("debugger")
+   end
 
-	main.argparse()
-	main.new()
-	main.run()
+   main.clock = {}
+   main.clock.log = 0
+   opt = main.argparse()
+
+   if config.main.test then
+      main.test()
+   else
+      main.new()
+      main.run()
+   end
+
+   
 end
 
 -- Parse arguments
 function main.argparse()
    local cmd = torch.CmdLine()
+
    -- Options
-   cmd:option("-debug",0, "debug setting")
-   cmd:option("-gpu", 0, "using gpu")
+   cmd:option("-resume",0,"Resumption point in epoch. 0 means not resumption.")
    cmd:text()
    
    -- Parse the option
-   local opt = cmd:parse(arg or {})   
-   if opt.debug > 0 then
-		dbg = require('debugger')
+   local opt = cmd:parse(arg or {})
+   return opt
+end
+
+-- Train a new experiment
+function main.new()
+   -- Load the data
+   print("Loading datasets...")
+   main.train_data = Data(config.train_data)
+   main.val_data = Data(config.val_data)
+   
+   -- Load the model
+   print("Loading the model...")
+   main.model = Model(config.model)
+   if config.main.randomize then
+      main.model:randomize(config.main.randomize)
+      print("Model randomized.")
+   end
+   main.model:type(config.main.type)
+   print("Current model type: "..main.model:type())
+   collectgarbage()
+
+   -- Initiate the trainer
+   print("Loading the trainer...")
+   main.train = Train(main.train_data, main.model, config.loss(), config.train)
+
+   -- Initiate the tester
+   print("Loading the tester...")
+   main.test_val = Test(main.val_data, main.model, config.loss(), config.test)
+
+   -- The record structure
+   main.record = {}
+
+   collectgarbage()
+end
+
+-- Start the training
+function main.run()
+   --Run for this number of era
+   local best_acc_score = -1.0
+   for i = 1,config.main.eras do
+
+      if config.main.dropout then
+	     print("Enabling dropouts")
+	     main.model:enableDropouts()
+      else
+	     print("Disabling dropouts")
+	     main.model:disableDropouts()
+      end
+      print("Training for era "..i)
+      main.train:run(config.main.epoches, main.trainlog)
+
+      if config.main.validate == true then
+	     print("Disabling dropouts")
+        main.model:disableDropouts()
+	     print("Testing on develop data for era "..i)
+	     main.test_val:run(main.testlog)
+      end
+
+      acc_score = 1 - main.test_val.e
+      print("Validate accuracy is: " .. string.format("%.2e",acc_score))
+      if acc_score > best_acc_score then
+         main.save()
+      end
+      collectgarbage()
+   end
+end
+
+function main.test()
+   
+   config.model.file = config.main.save .. "/sequential_"..tostring(opt.resume)..".t7b"
+   print("Using model resumption point "..config.model.file)
+
+   -- Load the model
+   print("Loading the model...")
+   main.model = Model(config.model)
+   main.model:type(config.main.type)
+
+   print("Disabling dropouts")
+   main.model:disableDropouts()
+
+   main.test_data = Data(config.test_data)
+
+   main.test = Test(main.test_data, main.model, config.loss(), config.test)
+   main.test:run(main.testlog)
+   preds = main.test.predLabels -- 18990 types
+
+   fs = paths.dir(paths.cwd() .. "/annotation/coloncancer/Test")
+   idx = 0
+
+   for i = 3, #fs do
+      fn = fs[i]
+      f_dir = paths.cwd() .. "/annotation/coloncancer/Test/" .. fn
+      out_dir = paths.cwd() .. "/output/" .. fn
+
+      if lfs.attributes(out_dir) == nil then
+         lfs.mkdir(out_dir)
+      end
+
+      xmls = paths.dir(f_dir)
+
+      x_n_out = torch.DiskFile(out_dir .. "/" .. xmls[3], 'w')
+
+      local file = io.open(f_dir .. "/" .. xmls[3], 'r')
+      local line
+
+      while true do
+       line = file:read()
+       if line == nil then break end
+
+       if string.find(line, "<Type>N/A</Type>") or 
+         string.find(line, "<Type>ASPECTUAL</Type>")  or string.find(line, "<Type>EVIDENTIAL</Type>") then
+
+         idx = idx + 1
+
+         if preds[idx] == 1 then
+            line = "<Type>" .. "N/A" .. "</Type>"
+         elseif preds[idx] == 2 then
+            line = "<Type>" .. "ASPECTUAL" .. "</Type>"
+         elseif preds[idx] == 3 then
+            line = "<Type>" .. "EVIDENTIAL" .. "</Type>"
+         else 
+            error("Wrong label")         
+         end
+
+       end
+
+       x_n_out:writeString(line .. "\n")
+
+      end    
+
+      file:close()
+      x_n_out:close()
+
    end
 
-	if opt.gpu > 0 then
-   		require("cutorch")
-   		require("cunn")
-   		cutorch.setDevice(opt.gpu)
-   		print("Device gpu set to ".. opt.gpu)
-   	else
-   		print("Device is cpu")
-	end
+   if idx ~= preds:size(1) then
+      error("Label numer mismatch")
+   end
 
+   os.execute("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p output")
 end
 
-function main.new()
-	print("Loading datasets...")
-	main.train_data = Data(config.train_data)
-	main.val_data = Data(config.val_data)
+-- Save a record
+function main.save()
+   -- Record necessary configurations
+   config.train.epoch = main.train.epoch
 
-	print("Loading the model...")
-	main.model = Model(config.model, config.main.type)
-	if config.main.randomize then
-		main.model:randomize(config.main.randomize)
-		print("Model randomized.")
-	end
-	main.model:type(config.main.type)
-	print("Current model type: "..main.model:type())
-	collectgarbage()
+   -- Make the save
+   torch.save(paths.concat(config.main.save,"main_"..(main.train.epoch-1)..".t7b"),
+	      {config = config, record = main.record, momentum = main.train.old_grads:double()})
+   torch.save(paths.concat(config.main.save,"sequential_"..(main.train.epoch-1)..".t7b"),
+	      main.model:clearSequential(main.model:makeCleanSequential(main.model.sequential)))
 
-	print("Loading the trainer...")
-	main.train = Train(main.train_data, main.model, config.loss(), config.train)
-
-	print("Loading the tester...")
-	main.test_val = Test(main.val_data, main.model, config.loss(), config.test)
-
-	collectgarbage()
-end
-
-function main.run()
-
-	for i = 1, config.main.eras do
-		if config.main.dropout then
-			print("Enabling dropouts")
-			main.model:enableDropouts()
-		else
-			print("Disabling dropouts")
-			main.model:disableDropouts()
-		end
-
-		print("Training for era " .. i)
-		main.train:run(config.main.epoches, main.trainlog)
-
-		if config.main.test == true then
-			print("Disabling dropouts")
-			main.model:disableDropouts()
-			print("Testing on test data for era " .. i)
-  			main.test_val:run(main.testlog)
-  		end
-
-  		print("val_error is"..string.format("%.2e",main.test_val.e))
-
-  	end
+   collectgarbage()
 end
 
 -- The training logging function
@@ -106,42 +228,14 @@ function main.trainlog(train)
 
    if (os.time() - main.clock.log) >= (config.main.logtime or 1) then
       local msg = ""
-      
-      if config.main.details then
-	 msg = msg.."epo: "..(train.epoch-1)..
+
+	     msg = msg.."epo: "..(train.epoch-1)..
 	    ", rat: "..string.format("%.2e",train.rate)..
 	    ", err: "..string.format("%.2e",train.error)..
-	    ", obj: "..string.format("%.2e",train.objective)..
-	    ", dat: "..string.format("%.2e",train.time.data)..
-	    ", fpp: "..string.format("%.2e",train.time.forward)..
-	    ", bpp: "..string.format("%.2e",train.time.backward)..
-	    ", upd: "..string.format("%.2e",train.time.update)
-      end
-      
-      if config.main.debug then
-	 msg = msg..", bmn: "..string.format("%.2e",train.batch:mean())..
-	    ", bsd: "..string.format("%.2e",train.batch:std())..
-	    ", bmi: "..string.format("%.2e",train.batch:min())..
-	    ", bmx: "..string.format("%.2e",train.batch:max())..
-	    ", pmn: "..string.format("%.2e",train.params:mean())..
-	    ", psd: "..string.format("%.2e",train.params:std())..
-	    ", pmi: "..string.format("%.2e",train.params:min())..
-	    ", pmx: "..string.format("%.2e",train.params:max())..
-	    ", gmn: "..string.format("%.2e",train.grads:mean())..
-	    ", gsd: "..string.format("%.2e",train.grads:std())..
-	    ", gmi: "..string.format("%.2e",train.grads:min())..
-	    ", gmx: "..string.format("%.2e",train.grads:max())..
-	    ", omn: "..string.format("%.2e",train.old_grads:mean())..
-	    ", osd: "..string.format("%.2e",train.old_grads:std())..
-	    ", omi: "..string.format("%.2e",train.old_grads:min())..
-	    ", omx: "..string.format("%.2e",train.old_grads:max())
-	 main.draw()
-      end
-      
-      if config.main.details or config.main.debug then
-	 print(msg)
-      end
+	    ", obj: "..string.format("%.2e",train.objective)
 
+      print(msg)
+   
       main.clock.log = os.time()
    end
 end
@@ -151,19 +245,15 @@ function main.testlog(test)
       print("Collecting garbage at n = "..test.n)
       collectgarbage()
    end
-   if not config.main.details then return end
    if (os.time() - main.clock.log) >= (config.main.logtime or 1) then
       print("n: "..test.n..
 	       ", e: "..string.format("%.2e",test.e)..
 	       ", l: "..string.format("%.2e",test.l)..
 	       ", err: "..string.format("%.2e",test.err)..
-	       ", obj: "..string.format("%.2e",test.objective)..
-	       ", dat: "..string.format("%.2e",test.time.data)..
-	       ", fpp: "..string.format("%.2e",test.time.forward)..
-	       ", acc: "..string.format("%.2e",test.time.accumulate))
+	       ", obj: "..string.format("%.2e",test.objective))
       main.clock.log = os.time()
    end
 end
 
---Execute the main program
+-- Execute the main program
 main.main()

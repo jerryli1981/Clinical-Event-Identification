@@ -26,6 +26,13 @@ config.val_data.alphabet = alphabet
 config.val_data.length = seq_length
 config.val_data.batch_size = 128
 
+-- Test data
+config.test_data = {}
+config.test_data.file =  paths.cwd() .. "/data/type_test.t7b"
+config.test_data.alphabet = alphabet
+config.test_data.length = seq_length
+config.test_data.batch_size = 128
+
 -- The model
 config.model = {}
 -- #alphabet x 1014
@@ -77,23 +84,18 @@ config.train.decay = 1e-5
 config.test = {}
 config.test.confusion = true
 
--- UI settings
-config.mui = {}
-config.mui.width = 1200
-config.mui.scale = 4
-config.mui.n = 16
 
 -- Main program
 config.main = {}
-config.main.type = "torch.CudaTensor"
+config.main.type = "torch.DoubleTensor"
 config.main.eras = 1
-config.main.epoches = 1000
+config.main.epoches = 2
 config.main.randomize = 5e-2
 config.main.dropout = true
 config.main.save = paths.concat(paths.cwd())
-config.main.details = true
-config.main.device = 1
 config.main.collectgarbage = 100
 config.main.logtime = 5
-config.main.debug = false
+config.main.validate = true
+config.main.device = false
 config.main.test = true
+config.main.debug =true

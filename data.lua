@@ -28,6 +28,7 @@ function Data:__init(config)
 
    self.config = config
    self.data = torch.load(self.file)
+   self.num_samples = data.n
 
    if self.prob then
       for i = 1, #self.prob - 1 do
