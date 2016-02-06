@@ -23,6 +23,7 @@ if __name__ == '__main__':
             predict.append(int(l.strip()))
 
     labelidx = 0
+    
 
     for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
 
@@ -57,6 +58,8 @@ if __name__ == '__main__':
                         f.write("</info>"+"\n\n\n")
                         f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
                         f.write("<annotations>\n\n\n")
+
+                        count = 1
          
                         for span in spans:
                             label = predict[labelidx]
@@ -85,6 +88,7 @@ if __name__ == '__main__':
                                 f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
                                 f.write("\t\t</properties>\n")
                                 f.write("\t</entity>\n\n")
+                                count += 1
          
                         f.write("\n\n</annotations>\n")
                         f.write("</data>")
