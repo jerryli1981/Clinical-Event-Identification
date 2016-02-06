@@ -96,6 +96,6 @@ config.main.save = paths.concat(paths.cwd())
 config.main.collectgarbage = 100
 config.main.logtime = 5
 config.main.validate = true
-config.main.device = false
+config.main.device = 3
 config.main.test = false
 config.main.debug =false
