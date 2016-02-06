@@ -63,7 +63,6 @@ function main.argparse()
    cmd:option("-test",0,"test. 0 means not test.")
    cmd:option("-debug",0,"debug. 0 means not debug.")
    cmd:option("-device",0,"device. 0 means cpu.")
-   cmd:option("-lastepoch",0,"last epoch")
    cmd:text()
 
    -- Parse the option
@@ -72,18 +71,26 @@ function main.argparse()
    -- Resumption operation
    if opt.resume > 0 then
       -- Find the main resumption file
-      config.main.resume = config.main.save .. "/main_"..tostring(opt.lastepoch)..".t7b"
+      local files = main.findFiles(paths.concat(config.main.save,"main_"..tostring(opt.resume).."_*.t7b"))
+      if #files ~= 1 then
+    error("Found "..tostring(#files).." main resumption point.")
+      end
+      config.main.resume = files[1]
       print("Using main resumption point "..config.main.resume)
       -- Find the model resumption file
-      config.model.file = config.main.save .. "/sequential_"..tostring(opt.lastepoch)..".t7b"
+      local files = main.findFiles(paths.concat(config.main.save,"sequential_"..tostring(opt.resume).."_*.t7b"))
+      if #files ~= 1 then
+    error("Found "..tostring(#files).." model resumption point.")
+      end
+      config.model.file = files[1]
       print("Using model resumption point "..config.model.file)
       -- Resume the training epoch
       config.train.epoch = tonumber(opt.resume) + 1
       print("Next training epoch resumed to "..config.train.epoch)
       -- Don't do randomize
       if config.main.randomize then
-         config.main.randomize = nil
-         print("Disabled randomization for resumption")
+    config.main.randomize = nil
+    print("Disabled randomization for resumption")
       end
    end
 
@@ -155,10 +162,7 @@ function main.run()
 end
 
 function main.test()
-
-   config.model.file = config.main.save .. "/sequential_"..tostring(opt.lastepoch)..".t7b"
-   print("Using model  "..config.model.file)
-
+   print("Begin Testing ....")
    -- Load the model
    print("Loading the model...")
    main.model = Model(config.model)
@@ -243,16 +247,16 @@ function main.test()
    os.execute("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p output")
 end
 
--- Save a record
 function main.save()
    -- Record necessary configurations
    config.train.epoch = main.train.epoch
 
    -- Make the save
-   torch.save(paths.concat(config.main.save,"main_"..(main.train.epoch-1)..".t7b"),
-	      {config = config, record = main.record, momentum = main.train.old_grads:double()})
-   torch.save(paths.concat(config.main.save,"sequential_"..(main.train.epoch-1)..".t7b"),
-	      main.model:clearSequential(main.model:makeCleanSequential(main.model.sequential)))
+   local time = os.time()
+   torch.save(paths.concat(config.main.save,"main_"..(main.train.epoch-1).."_"..time..".t7b"),
+         {config = config, record = main.record, momentum = main.train.old_grads:double()})
+   torch.save(paths.concat(config.main.save,"sequential_"..(main.train.epoch-1).."_"..time..".t7b"),
+         main.model:clearSequential(main.model:makeCleanSequential(main.model.sequential)))
 
    collectgarbage()
 end
@@ -291,6 +295,18 @@ function main.testlog(test)
 	       ", obj: "..string.format("%.2e",test.objective))
       main.clock.log = os.time()
    end
+end
+
+-- Utility function: find files with the specific 'ls' pattern
+function main.findFiles(pattern)
+   require("sys")
+   local cmd = "ls "..pattern
+   local str = sys.execute(cmd)
+   local files = {}
+   for file in str:gmatch("[^\n]+") do
+      files[#files+1] = file
+   end
+   return files
 end
 
 -- Execute the main program
