@@ -43,7 +43,7 @@ function main.main()
    main.clock.log = 0
    opt = main.argparse()
 
-   if config.main.test then
+   if opt.resume > 0 then
       main.test()
    else
       main.new()
@@ -131,7 +131,7 @@ function main.run()
 end
 
 function main.test()
-   
+
    config.model.file = config.main.save .. "/sequential_"..tostring(opt.resume)..".t7b"
    print("Using model resumption point "..config.model.file)
 
@@ -167,13 +167,14 @@ function main.test()
       for i=1, #xmls do
          tmpxml = xmls[i]
          if string.find(tmpxml, "Temporal") then
+            
             xml = tmpxml
          end
       end
 
       x_n_out = torch.DiskFile(out_dir .. "/" .. xml, 'w')
 
-      local file = io.open(f_dir .. "/" .. xmls[3], 'r')
+      local file = io.open(f_dir .. "/" .. xml, 'r')
       local line
 
       while true do
