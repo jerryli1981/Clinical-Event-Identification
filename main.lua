@@ -163,7 +163,15 @@ function main.test()
 
       xmls = paths.dir(f_dir)
 
-      x_n_out = torch.DiskFile(out_dir .. "/" .. xmls[3], 'w')
+      local xml
+      for i=1, #xmls do
+         tmpxml = xmls[i]
+         if string.find(tmpxml, "Temporal") then
+            xml = tmpxml
+         end
+      end
+
+      x_n_out = torch.DiskFile(out_dir .. "/" .. xml, 'w')
 
       local file = io.open(f_dir .. "/" .. xmls[3], 'r')
       local line
