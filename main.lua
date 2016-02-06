@@ -149,11 +149,17 @@ function main.test()
    main.test:run(main.testlog)
    preds = main.test.predLabels -- 18990 types
 
-   fs = paths.dir(paths.cwd() .. "/annotation/coloncancer/Test")
+   fs = paths.iterdirs(paths.cwd() .. "/annotation/coloncancer/Test")
    idx = 0
 
-   for i = 3, #fs do
-      fn = fs[i]
+   allcase = {}
+   for fn in fs do
+      table.insert(allcase,fn)
+   end
+   table.sort(allcase)
+
+   for i=1, #allcase do
+      fn = allcase[i]
       f_dir = paths.cwd() .. "/annotation/coloncancer/Test/" .. fn
       out_dir = paths.cwd() .. "/output/" .. fn
 
@@ -167,7 +173,6 @@ function main.test()
       for i=1, #xmls do
          tmpxml = xmls[i]
          if string.find(tmpxml, "Temporal") then
-            
             xml = tmpxml
          end
       end
