@@ -71,10 +71,10 @@ function main.argparse()
    -- Resumption operation
    if opt.resume > 0 then
       -- Find the main resumption file
-      config.main.resume = config.main.save .. "main_"..tostring(opt.resume)..".t7b"
+      config.main.resume = config.main.save .. "/main_"..tostring(opt.resume)..".t7b"
       print("Using main resumption point "..config.main.resume)
       -- Find the model resumption file
-      config.model.file = config.main.save .. "sequential_"..tostring(opt.resume)..".t7b"
+      config.model.file = config.main.save .. "/sequential_"..tostring(opt.resume)..".t7b"
       print("Using model resumption point "..config.model.file)
       -- Resume the training epoch
       config.train.epoch = tonumber(opt.resume) + 1
