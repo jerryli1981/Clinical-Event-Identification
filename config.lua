@@ -87,7 +87,7 @@ config.test.confusion = true
 
 -- Main program
 config.main = {}
-config.main.type = "torch.DoubleTensor"
+config.main.type = "torch.CudaTensor"
 config.main.eras = 1
 config.main.epoches = 2
 config.main.randomize = 5e-2
@@ -97,5 +97,5 @@ config.main.collectgarbage = 100
 config.main.logtime = 5
 config.main.validate = true
 config.main.device = false
-config.main.test = true
-config.main.debug =true
+config.main.test = false
+config.main.debug =false
