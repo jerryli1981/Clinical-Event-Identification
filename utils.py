@@ -342,7 +342,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     return X, Y_labels, seqlen, num_feats
 
-def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
+def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2, shuffle = False):
 
     ext_positive = 0
     ext_negative=0
@@ -408,7 +408,9 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
 
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
-                        shuffle(merged_spans)
+
+                        if shuffle:
+                            shuffle(merged_spans)
 
                         for span in merged_spans:
 
@@ -432,96 +434,7 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
     print "Extract positive events is %d"%ext_positive
     print "Extract negative events is %d"%ext_negative
 
-def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
-
-    ext_positive = 0
-    ext_negative=0
-
-    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
-        open(os.path.join(outDir, "label.txt"), 'w') as g_label:
-
-        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
-
-        for dir_path, dir_names, file_names in os.walk(input_text_dir):
-
-            pbar = ProgressBar(maxval=len(file_names)).start()
-
-            for i, fn in enumerate(sorted(file_names)):
-
-                time.sleep(0.01)
-                pbar.update(i + 1)
-
-                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
-
-                    for xml_name in xml_names:
-
-                        if "Temporal" not in xml_name:
-                            raise "Temporal does not existed"
-
-                        #print fn
-
-                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
-                        data = anafora.AnaforaData.from_file(xml_path)
-
-
-                        positive_span_label_map={}
-
-                        for annotation in data.annotations:
-                            if annotation.type == 'EVENT':
-
-                                startoffset = annotation.spans[0][0]
-                                endoffset = annotation.spans[0][1]
-
-                                properties = annotation.properties
-                                pros = {}
-                                for pro_name in properties:
-                                    pro_val = properties.__getitem__(pro_name)
-                                    pros[pro_name] = pro_val
-             
-                                Type_label = Type[pros["Type"]]
-                                Degree_label = Degree[pros["Degree"]]
-                                Polarity_label = Polarity[pros["Polarity"]]
-                                ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-        
-                                positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
-                                   +Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                    +ContextualModality_label
-
-                        with open(os.path.join(input_text_dir, fn), 'r') as f:
-                            content = f.read()
-
-                        all_spans = content2span(content)
-
-                        negative_span_label_map={}
-                        for span in all_spans:
-                            if span not in positive_span_label_map:
-                                negative_span_label_map[span] = "0 4 4 3 5"
-
-                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
-
-                        for span in merged_spans:
-
-                            if span not in positive_span_label_map:
-                                ext_negative += 1
-                                label = "0 4 4 3 5"
-                            else:
-                                ext_positive += 1
-                                label = positive_span_label_map[span]
-
-                            if num_feats == 2:
-                                feat = feature_generation_2(content, span[0], span[1], window_size)
-                            elif num_feats == 3:
-                                feat = feature_generation_3(content, span[0], span[1], window_size)
-
-                            g_feature.write(feat+"\n")
-                            g_label.write(label+"\n")
-
-            pbar.finish()
-
-    print "Extract positive events is %d"%ext_positive
-    print "Extract negative events is %d"%ext_negative
-
-def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
+def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type, shuffle):
 
     with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
         open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
@@ -584,7 +497,9 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
                                 negative_span_label_map[span] = "4"
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
-                        shuffle(merged_spans)
+
+                        if shuffle:
+                            shuffle(merged_spans)
 
                         for span in merged_spans: 
 
@@ -598,88 +513,6 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
 
                             label = "\"" +label+"\""
                             feats = "\"" +feats+"\""
-
-                            csvf.write(label+","+feats+"\n")
-
-                            span_label = "\"" +span_label+"\""
-                            csvs.write(span_label+","+feats+"\n")
-
-            pbar.finish()
-
-
-
-def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
-
-    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
-        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
-
-        for dir_path, dir_names, file_names in os.walk(input_text_dir):
-
-            pbar = ProgressBar(maxval=len(file_names)).start()
-
-            for i, fn in enumerate(sorted(file_names)):
-
-                time.sleep(0.01)
-                pbar.update(i + 1)
-
-                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
-
-                    for xml_name in xml_names:
-
-                        if "Temporal" not in xml_name:
-                            raise "Temporal does not existed"
-
-                        #print fn
-
-                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
-                        data = anafora.AnaforaData.from_file(xml_path)
-
-                        positive_spans_label_map={}
-
-                        for annotation in data.annotations:
-                            if annotation.type == 'EVENT':
-
-                                startoffset = annotation.spans[0][0]
-                                endoffset = annotation.spans[0][1]
-
-                                properties = annotation.properties
-                                pros = {}
-                
-                                for pro_name in properties:
-                                    pro_val = properties.__getitem__(pro_name)
-                                    pros[pro_name] = pro_val
-
-                                if input_name == "type":
-                                    label = Type[pros["Type"]]
-                                elif input_name == "polarity":
-                                    label = Polarity[pros["Polarity"]]
-                                elif input_name == "degree":
-                                    label = Degree[pros["Degree"]]
-                                elif input_name == "modality":
-                                    label = ContextualModality[pros["ContextualModality"]]
-
-                                positive_spans_label_map[(startoffset,endoffset)] = label
-
-                        with open(os.path.join(input_text_dir, fn), 'r') as f:
-                            content = f.read()
-
-                        all_spans = content2span(content)
-
-                        negative_span_label_map={}
-                        for span in all_spans:
-                            if span not in positive_span_label_map:
-                                negative_span_label_map[span] = "4"
-
-                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
-                        for span in merged_spans:
-                            feats = feature_generation_1(content, span[0], span[1], window_size)
-                            feats = "\"" +feats+"\""
-                            if span not in positive_spans_label_map:
-                                label = "\"" +"4"+"\""
-                                span_label = "1"
-                            else:
-                                label = "\"" +positive_spans_label_map[span]+"\""
-                                span_label = "2"
 
                             csvf.write(label+","+feats+"\n")
 

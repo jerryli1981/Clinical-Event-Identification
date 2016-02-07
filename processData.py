@@ -38,9 +38,9 @@ if __name__ == '__main__':
 
     if input_name != None:
 
-        preprocess_train_data_torch(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train")
-        preprocess_train_data_torch(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev")
-        preprocess_test_data_torch(text_dir_test, ann_dir_test, data_dir, window_size, input_name, "test")
+        preprocess_data_torch(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train", True)
+        preprocess_data_torch(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev", True)
+        preprocess_data_torch(text_dir_test, ann_dir_test, data_dir, window_size, input_name, "test", False)
 
         os.system('th csv2t7b.lua -input ./data/span_train.csv -output ./data/span_train.t7b')
         os.system('th csv2t7b.lua -input ./data/span_dev.csv -output ./data/span_dev.t7b')
@@ -60,13 +60,13 @@ if __name__ == '__main__':
     num_feats=3
 
     print "Process traing data"
-    preprocess_train_data_lasagne(ann_dir_train, text_dir_train, data_dir_train, window_size, num_feats)
+    preprocess_data_lasagne(ann_dir_train, text_dir_train, data_dir_train, window_size, num_feats, True)
 
     print "Process dev data"
-    preprocess_train_data_lasagne(ann_dir_dev, text_dir_dev, data_dir_dev, window_size, num_feats)
+    preprocess_data_lasagne(ann_dir_dev, text_dir_dev, data_dir_dev, window_size, num_feats, True)
 
     print "Process test data"
-    preprocess_test_data_lasagne(ann_dir_test, text_dir_test, data_dir_test, window_size, num_feats)
+    preprocess_data_lasagne(ann_dir_test, text_dir_test, data_dir_test, window_size, num_feats, False)
 
     build_vocab(
         glob.glob(os.path.join(data_dir, '*/*.toks')),
