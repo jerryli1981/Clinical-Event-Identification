@@ -18,7 +18,7 @@ if __name__ == '__main__':
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer/Test')
 
     predict = []
-    with open(os.path.join(base_dir, 'decisions.txt') )as f:
+    with open(os.path.join(base_dir, 'span_decisions.txt') )as f:
         for l in f:
             predict.append(int(l.strip()))
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
                             label = predict[labelidx]
                             labelidx += 1
 
-                            if label != 4:
+                            if label == 1:
                                 f.write("\t<entity>\n")
                                 f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                                 f.write("\t\t<span>"+str(span[0])+","+str(span[1])+"</span>\n")
@@ -73,14 +73,7 @@ if __name__ == '__main__':
                                 f.write("\t\t<parentsType></parentsType>\n")
                                 f.write("\t\t<properties>\n")
                                 f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
-                                
-                                if label == 1:
-                                    f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
-                                elif label == 2:
-                                    f.write("\t\t\t<Type>"+"ASPECTUAL"+"</Type>\n")
-                                elif label == 3:
-                                    f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
-
+                                f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
                                 f.write("\t\t\t<Degree>N/A</Degree>\n")
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                                 f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
