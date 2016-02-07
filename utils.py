@@ -12,15 +12,10 @@ from random import shuffle
 tokenizer = nltk.tokenize.RegexpTokenizer('\w+|\$[\d\.]+|\S+')
 tagger = PerceptronTagger()
 
-
-DocTimeRel = {"BEFORE":"0", "OVERLAP":"1", "AFTER":"2", "BEFORE/OVERLAP":"3", "UNK":"4"}
-Type={"N/A":"0", "ASPECTUAL":"1", "EVIDENTIAL":"2", "UNK":"3"}
-Degree = {"N/A":"0", "MOST":"1", "LITTLE":"2", "UNK":"3"}
-Polarity = {"POS":"0", "NEG":"1", "UNK":"2"}
-ContextualModality = {"ACTUAL":"0", "HYPOTHETICAL":"1", "HEDGED":"2", "GENERIC":"3", "UNK":"4"}
-ContextualAspect = {"N/A":"0", "NOVEL":"1", "INTERMITTENT":"2", "UNK":"3"}
-Permanence = {"UNDETERMINED":"0", "FINITE":"1", "PERMANENT":"2", "UNK":"3"}
-
+Type={"N/A":"1", "ASPECTUAL":"2", "EVIDENTIAL":"3"}
+Degree = {"N/A":"1", "MOST":"2", "LITTLE":"3"}
+Polarity = {"POS":"1", "NEG":"2"}
+ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":"4"}
 
 def make_dirs(dirs):
     for d in dirs:
@@ -263,342 +258,6 @@ def feature_generation_1(content, startoffset, endoffset, window_size=3):
     return " ".join(features)
 
 
-def preprocess_data(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
-
-    total_positive = 0
-    ext_positive = 0
-    ext_negative=0
-
-    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
-        open(os.path.join(outDir, "label.txt"), 'w') as g_label:
-
-        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
-
-        for sub_dir, text_name, xml_names in anafora.walk(input_ann_dir):
-
-            text_path = os.path.join(input_text_dir, sub_dir)
-
-            print text_path
-
-            with open(text_path, 'r') as f:
-
-                for xml_name in xml_names:
-
-                    if "Temporal" not in xml_name:
-                        continue
-
-                    xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
-                    data = anafora.AnaforaData.from_file(xml_path)
-
-
-                    content = f.read()
-                    positive_span_feat_map={}
-
-                    for annotation in data.annotations:
-                        if annotation.type == 'EVENT':
-                            total_positive +=1
-                            startoffset = annotation.spans[0][0]
-                            endoffset = annotation.spans[0][1]
-
-                            ext_positive += 1
-
-                            if num_feats == 2:
-                                feats = feature_generation_2(content, startoffset, endoffset, window_size)
-                            elif num_feats == 3:
-                                feats = feature_generation_3(content, startoffset, endoffset, window_size)
-
-                            properties = annotation.properties
-                            pros = {}
-                            for pro_name in properties:
-                                pro_val = properties.__getitem__(pro_name)
-                                pros[pro_name] = pro_val
-         
-                            DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
-                            Type_label = Type[pros["Type"]]
-                            Degree_label = Degree[pros["Degree"]]
-                            Polarity_label = Polarity[pros["Polarity"]]
-                            ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-                            ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
-                            Permanence_label = Permanence[pros["Permanence"]]
-    
-                            positive_span_feat_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
-                                +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
-
-
-                    all_spans = content2span(content)
-
-                    negative_span_feat_map={}
-                    for span in all_spans:
-                        if span not in positive_span_feat_map:
-                            ext_negative += 1
-                            if num_feats == 2:
-                                feats = feature_generation_2(content, span[0], span[1], window_size)
-                            elif num_feats == 3:
-                                feats = feature_generation_3(content, span[0], span[1], window_size)
-
-                            negative_span_feat_map[span] = feats+"\t"+"0 4 3 3 2 4 3 3"
-
-                    merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
-                    shuffle(merged_spans)
-
-                    for span in merged_spans:
-                        if span in positive_span_feat_map:
-                            feat, lab = positive_span_feat_map[span].split("\t")
-                        elif span in negative_span_feat_map:
-                            feat, lab = negative_span_feat_map[span].split("\t")
-
-                        g_feature.write(feat+"\n")
-                        g_label.write(lab+"\n")
-
-    print "Total positive events is %d"%total_positive
-    print "Extract positive events is %d"%ext_positive
-    print "Extract negative events is %d"%ext_negative
-
-def preprocess_test_data(input_text_dir, outDir, window_size=3, num_feats=2):
-
-    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature:
-
-        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
-
-        for dir_path, dir_names, file_names in os.walk(input_text_dir):
-
-            for fn in file_names:
-                print fn
-                with open(os.path.join(dir_path, fn), 'r') as f:
-                    content = f.read()
-                    Spans = content2span(content)
-
-                    for span in Spans:
-
-                        if num_feats == 2:
-                            feats = feature_generation_2(content, span[0], span[1], window_size)
-                        elif num_feats == 3:
-                            feats = feature_generation_3(content, span[0], span[1], window_size)
-
-                        g_feature.write(feats+"\n")
-
-def preprocess_test_data_phase2(input_text_dir, input_ann_dir, outDir, window_size=3, num_feats=2):
-
-    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature:
-
-        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
-
-        for dir_path, dir_names, file_names in os.walk(input_text_dir):
-
-            for fn in file_names:
-
-                print fn
-
-                Spans = []
-
-                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
-
-                    for xml_name in xml_names:
-
-                        if "Temporal" not in xml_name:
-                            continue
-
-                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
-                        data = anafora.AnaforaData.from_file(xml_path)
-
-                        for annotation in data.annotations:
-                            if annotation.type == 'EVENT':
-
-                                startoffset = annotation.spans[0][0]
-                                endoffset = annotation.spans[0][1]
-
-                                Spans.append((startoffset,endoffset))
-
-                with open(os.path.join(input_text_dir, fn), 'r') as f:
-                    content = f.read()
-
-                for i, span in enumerate(Spans):
-
-                    if num_feats == 2:
-                        feats = feature_generation_2(content, span[0], span[1], window_size)
-                    elif num_feats == 3:
-                        feats = feature_generation_3(content, span[0], span[1], window_size)
-
-                    g_feature.write(feats+"\n")
-
-
-# this method need keep for submit results
-def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
-
-    from collections import defaultdict
-    words = defaultdict(int)
-
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
-
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
-
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
-
-    seqlen = 2*window_size+1
-    with open(os.path.join(test_dir, fn), 'r') as f:
-
-        content = f.read()
-        Spans = content2span(content)
-
-        X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
-
-        for i, span in enumerate(Spans):
-
-            if num_feats == 2:
-                feats = feature_generation_2(content, span[0], span[1], window_size)
-            elif num_feats == 3:
-                feats = feature_generation_3(content, span[0], span[1], window_size)
-
-            toks_a = feats.split()
-            step = 0
-            for j in range(seqlen):
-
-                for k in range(num_feats):
-                    X[i, j, k] = vocab[toks_a[step+k]]
-
-                step += num_feats
-
-        return Spans, X
-
-def generateTestInput_phase2(dataset_dir, plain_test_dir, ann_test_dir, fn, window_size, num_feats):
-
-    from collections import defaultdict
-    words = defaultdict(int)
-
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
-
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
-
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
-
-    seqlen = 2*window_size+1
-
-    Spans = []
-
-    for sub_dir, text_name, xml_names in anafora.walk(os.path.join(ann_test_dir, fn)):
-
-        #print os.path.join(ann_test_dir, fn)
-
-        for xml_name in xml_names:
-
-            if "Temporal" not in xml_name:
-                continue
-
-            xml_path = os.path.join(ann_test_dir, text_name, xml_name)
-            data = anafora.AnaforaData.from_file(xml_path)
-
-            for annotation in data.annotations:
-                if annotation.type == 'EVENT':
-
-                    startoffset = annotation.spans[0][0]
-                    endoffset = annotation.spans[0][1]
-
-                    Spans.append((startoffset,endoffset))
-
-    with open(os.path.join(plain_test_dir, fn), 'r') as f:
-        content = f.read()
-
-    X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
-
-    for i, span in enumerate(Spans):
-
-        if num_feats == 2:
-            feats = feature_generation_2(content, span[0], span[1], window_size)
-        elif num_feats == 3:
-            feats = feature_generation_3(content, span[0], span[1], window_size)
-
-        toks_a = feats.split()
-        step = 0
-        for j in range(seqlen):
-
-            for k in range(num_feats):
-                X[i, j, k] = vocab[toks_a[step+k]]
-
-            step += num_feats
-
-    return Spans, X
-
-def generateTestInput_Char(dataset_dir, test_dir, fn, window_size, num_feats, total_charachter = 50):
-
-    from collections import defaultdict
-    words = defaultdict(int)
-
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
-
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
-
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
-
-    seqlen = 2*window_size+1
-    with open(os.path.join(test_dir, fn), 'r') as f:
-
-        content = f.read()
-        Spans = content2span(content)
-
-        X = np.zeros((len(Spans), total_charachter, 1), dtype=np.int16)
-
-        for i, span in enumerate(Spans):
-
-            if num_feats == 2:
-                feats = feature_generation_2(content, span[0], span[1], window_size)
-            elif num_feats == 3:
-                feats = feature_generation_3(content, span[0], span[1], window_size)
-
-            toks_a = feats.split()
-
-            toks = [ toks_a[i] for i in range(2,len(toks_a),3) ]
-            central_word = toks[4]
-            len_cw = len(central_word)
-            
-            if len_cw % 2 ==0:
-                left_window_size = (total_charachter-len_cw)/2
-                right_window_size = (total_charachter-len_cw)/2
-            else:
-                left_window_size = (total_charachter-len_cw)/2
-                right_window_size = left_window_size + 1
-
-            assert len_cw + left_window_size + right_window_size == total_charachter, "Wrong window_size"
-
-            pre_toks = toks[:4]
-            post_toks = toks[5:]
-
-            precharseq = "".join(pre_toks)
-            postcharseq = "".join(post_toks)
-
-            if len(precharseq) < left_window_size:
-                precharseq = "0"*(left_window_size-len(precharseq)) + precharseq
-            else:
-                precharseq = precharseq[-left_window_size:]
-
-
-            if len(postcharseq) < right_window_size:
-                postcharseq = postcharseq + "0"*(right_window_size-len(postcharseq))
-            else:
-                postcharseq = postcharseq[:right_window_size]
-
-            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter, "wrong sequence length"
-
-            char_seq = precharseq+central_word+postcharseq
-
-            for j in range(total_charachter):
-                X[i, j, 0] = vocab[char_seq[j]]
-            
-        return Spans, X
-
-
 def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
@@ -679,180 +338,323 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     return X, Y_labels, seqlen, num_feats
 
-def read_char_encoding_sequence_dataset(dataset_dir, dataset_name, total_charachter = 50):
+def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
-    a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
-    labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
+    ext_positive = 0
+    ext_negative=0
 
-    with open(a_s) as f:
-        num_feats, window_size = f.readline().strip().split('\t')
+    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
+        open(os.path.join(outDir, "label.txt"), 'w') as g_label:
 
-    num_feats = int(num_feats)
-    window_size = int(window_size)
+        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
 
-    data_size = len([line.rstrip('\n') for line in open(a_s)])
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-    seqlen = 2*window_size+1
+            for fn in file_names:
 
-    X = np.zeros((data_size-1, total_charachter, 1), dtype=np.int16)
+                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
-    from collections import defaultdict
-    words = defaultdict(int)
+                    for xml_name in xml_names:
 
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+                        if "Temporal" not in xml_name:
+                            raise "Temporal does not existed"
 
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
+                        print fn
 
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
-
-    Event_label = []
-    DocTimeRel_label = []
-    Type_label = []
-    Degree_label = []
-    Polarity_label = []
-    ContextualModality_label = []
-    ContextualAspect_label = []
-    Permanence_label = []
-
-    with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
-        f1.readline()                 
-        for i, (a, label) in enumerate(zip(f1,f4)):
-
-            l0, l1, l2, l3, l4, l5, l6, l7 = label.rstrip('\n').split()
-            Event_label.append(l0)
-            DocTimeRel_label.append(l1)
-            Type_label.append(l2)
-            Degree_label.append(l3)
-            Polarity_label.append(l4)
-            ContextualModality_label.append(l5)
-            ContextualAspect_label.append(l6)
-            Permanence_label.append(l7)
-
-            toks_a = a.rstrip('\n').split()
-            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
-
-            #NN x colon NN x cancer TO x to NN x metastasize TO x to DT x the NN x distal NN x esophagus VBN Xx Given
-            toks = [ toks_a[i] for i in range(2,len(toks_a),3) ]
-            central_word = toks[4]
-            len_cw = len(central_word)
-            
-            if len_cw % 2 ==0:
-                left_window_size = (total_charachter-len_cw)/2
-                right_window_size = (total_charachter-len_cw)/2
-            else:
-                left_window_size = (total_charachter-len_cw)/2
-                right_window_size = left_window_size + 1
-
-            assert len_cw + left_window_size + right_window_size == total_charachter, "Wrong window_size"
-
-            pre_toks = toks[:4]
-            post_toks = toks[5:]
-
-            precharseq = "".join(pre_toks)
-            postcharseq = "".join(post_toks)
-
-            if len(precharseq) < left_window_size:
-                precharseq = "0"*(left_window_size-len(precharseq)) + precharseq
-            else:
-                precharseq = precharseq[-left_window_size:]
+                        xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
+                        data = anafora.AnaforaData.from_file(xml_path)
 
 
-            if len(postcharseq) < right_window_size:
-                postcharseq = postcharseq + "0"*(right_window_size-len(postcharseq))
-            else:
-                postcharseq = postcharseq[:right_window_size]
+                        positive_spans_label_map={}
 
-            assert len(precharseq) + len(central_word) + len(postcharseq) == total_charachter,\
-             "wrong sequence length " + " ".join(toks_a) +" " + precharseq+" " + central_word + " " +postcharseq
+                        for annotation in data.annotations:
+                            if annotation.type == 'EVENT':
 
-            char_seq = precharseq+central_word+postcharseq
+                                startoffset = annotation.spans[0][0]
+                                endoffset = annotation.spans[0][1]
 
-            for j in range(total_charachter):
-                X[i, j, 0] = vocab[char_seq[j]]
+                                ext_positive += 1
 
-         
-    Y_labels = np.zeros((X.shape[0], 31))
-    for i in range(X.shape[0]):
+                                properties = annotation.properties
+                                pros = {}
+                                for pro_name in properties:
+                                    pro_val = properties.__getitem__(pro_name)
+                                    pros[pro_name] = pro_val
+             
+                                DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
+                                Type_label = Type[pros["Type"]]
+                                Degree_label = Degree[pros["Degree"]]
+                                Polarity_label = Polarity[pros["Polarity"]]
+                                ContextualModality_label = ContextualModality[pros["ContextualModality"]]
+                                ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
+                                Permanence_label = Permanence[pros["Permanence"]]
+        
+                                positive_span_label_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
+                                    +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                    +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
 
-        Y_labels[i, int(Event_label[i])] = 1
-        Y_labels[i, 2+int(DocTimeRel_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + int(Type_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + int(Degree_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + int(Polarity_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + int(ContextualAspect_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + len(ContextualAspect) + int(Permanence_label[i])] = 1
+                        with open(os.path.join(input_text_dir, fn), 'r') as f:
+                            content = f.read()
 
-    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 31, "length error"
+                        all_spans = content2span(content)
 
-    return X, Y_labels, seqlen, num_feats
+                        negative_span_label_map={}
+                        for span in all_spans:
+                            if span not in positive_span_feat_map:
+                                negative_span_label_map[span] = "0 4 3 3 2 4 3 3"
 
-def read_sequence_dataset_labelIndex(dataset_dir, dataset_name):
+                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
+                        shuffle(merged_spans)
 
-    a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
-    labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
+                        for span in all_spans:
 
-    with open(a_s) as f:
-        num_feats, window_size = f.readline().strip().split('\t')
+                            if span not in positive_span_feat_map:
+                                ext_negative += 1
+                                label = negative_span_label_map[span]
+                            else:
+                                label = positive_span_label_map[span]
 
-    num_feats = int(num_feats)
-    window_size = int(window_size)
+                            if num_feats == 2:
+                                feats = feature_generation_2(content, span[0], span[1], window_size)
+                            elif num_feats == 3:
+                                feats = feature_generation_3(content, span[0], span[1], window_size)
 
-    data_size = len([line.rstrip('\n') for line in open(a_s)])
+                            g_feature.write(feat+"\n")
+                            g_label.write(label+"\n")
 
-    
-    seqlen = 2*window_size+1
+    print "Extract positive events is %d"%ext_positive
+    print "Extract negative events is %d"%ext_negative
 
-    X = np.zeros((data_size-1, seqlen, num_feats), dtype=np.int16)
+def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2):
 
-    from collections import defaultdict
-    words = defaultdict(int)
+    ext_positive = 0
+    ext_negative=0
 
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+    with open(os.path.join(outDir, "feature.toks"), 'w') as g_feature,\
+        open(os.path.join(outDir, "label.txt"), 'w') as g_label:
 
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
+        g_feature.write(str(num_feats)+"\t"+str(window_size)+"\n")
 
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-    event_labels = []
-    polarity_labels=[]
-    with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
-        f1.readline()                 
-        for i, (a, ent) in enumerate(zip(f1,f4)):
+            for fn in file_names:
 
-            a = a.rstrip('\n')
-            label = ent.rstrip('\n')
+                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
-            el, pl = label.split()
-            event_labels.append(el)
-            polarity_labels.append(pl)
+                    for xml_name in xml_names:
 
-            toks_a = a.split()
-            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
+                        if "Temporal" not in xml_name:
+                            raise "Temporal does not existed"
 
-            step = 0
-            for j in range(seqlen):
+                        print fn
 
-                for k in range(num_feats):
-                    X[i, j, k] = vocab[toks_a[step+k]]
+                        xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
+                        data = anafora.AnaforaData.from_file(xml_path)
 
-                step += num_feats
-         
-    #Either targets in [0, 1] matching the layout of predictions, 
-    #or a vector of int giving the correct class index per data point.
 
-    Y_labels = np.zeros((X.shape[0], 2))
-    for i in range(X.shape[0]):
-        Y_labels[i, 0] = int(event_labels[i])
-        Y_labels[i, 1] = int(polarity_labels[i])
+                        positive_spans_label_map={}
 
-    return X, Y_labels, seqlen, num_feats
+                        for annotation in data.annotations:
+                            if annotation.type == 'EVENT':
+
+                                startoffset = annotation.spans[0][0]
+                                endoffset = annotation.spans[0][1]
+
+                                ext_positive += 1
+
+                                properties = annotation.properties
+                                pros = {}
+                                for pro_name in properties:
+                                    pro_val = properties.__getitem__(pro_name)
+                                    pros[pro_name] = pro_val
+             
+                                DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
+                                Type_label = Type[pros["Type"]]
+                                Degree_label = Degree[pros["Degree"]]
+                                Polarity_label = Polarity[pros["Polarity"]]
+                                ContextualModality_label = ContextualModality[pros["ContextualModality"]]
+                                ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
+                                Permanence_label = Permanence[pros["Permanence"]]
+        
+                                positive_span_label_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
+                                    +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                    +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
+
+                        with open(os.path.join(input_text_dir, fn), 'r') as f:
+                            content = f.read()
+
+                        all_spans = content2span(content)
+
+                        for span in all_spans:
+
+                            if span not in positive_span_label_map:
+                                ext_negative += 1
+                                label = negative_span_label_map[span]
+                            else:
+                                label = "0 4 3 3 2 4 3 3"
+
+                            if num_feats == 2:
+                                feats = feature_generation_2(content, span[0], span[1], window_size)
+                            elif num_feats == 3:
+                                feats = feature_generation_3(content, span[0], span[1], window_size)
+
+                            g_feature.write(feat+"\n")
+                            g_label.write(label+"\n")
+
+    print "Extract positive events is %d"%ext_positive
+    print "Extract negative events is %d"%ext_negative
+
+def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
+
+    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
+        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
+
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
+
+            for fn in file_names:
+
+                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
+
+                    for xml_name in xml_names:
+
+                        if "Temporal" not in xml_name:
+                            continue
+
+                        print fn
+                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
+                        data = anafora.AnaforaData.from_file(xml_path)
+
+                        with open(os.path.join(input_text_dir, fn), 'r') as f:
+                            content = f.read()
+
+                        positive_span_feat_map={}
+
+                        for annotation in data.annotations:
+                            if annotation.type == 'EVENT':
+
+                                startoffset = annotation.spans[0][0]
+                                endoffset = annotation.spans[0][1]
+
+                                feats = feature_generation_1(content, startoffset, endoffset, window_size)
+
+                                if "\n" in feats:
+                                    print feats
+                                    print xml_name
+                                    print annotation.spans
+                                    print content[startoffset:endoffset]
+                                    exit()
+
+                                properties = annotation.properties
+                                pros = {}
+                
+                                for pro_name in properties:
+                                    pro_val = properties.__getitem__(pro_name)
+                                    pros[pro_name] = pro_val
+
+                                if input_name == "type":
+                                    label = Type[pros["Type"]]
+                                elif input_name == "polarity":
+                                    label = Polarity[pros["Polarity"]]
+                                elif input_name == "degree":
+                                    label = Degree[pros["Degree"]]
+                                elif input_name == "modality":
+                                    label = ContextualModality[pros["ContextualModality"]]
+
+                                positive_span_feat_map[(startoffset,endoffset)] = feats + "\t" + label
+
+
+                        all_spans = content2span(content)
+
+                        negative_span_feat_map={}
+                        for span in all_spans:
+                            if span not in positive_span_feat_map:
+                                feats = feature_generation_1(content, span[0], span[1], window_size)
+                                negative_span_feat_map[span] = feats + "\t" + "4"
+
+                        merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
+                        shuffle(merged_spans)
+
+                        for span in merged_spans:
+
+                            if span in positive_span_feat_map:
+                                feats, label = positive_span_feat_map[span].split("\t")
+                                span_label = "1"
+                            elif span in negative_span_feat_map:
+                                feats, label = negative_span_feat_map[span].split("\t")
+                                span_label = "2"
+
+                            label = "\"" +label+"\""
+                            feats = "\"" +feats+"\""
+                            csvf.write(label+","+feats+"\n")
+
+                            span_label = "\"" +span_label+"\""
+                            csvs.write(span_label+","+feats+"\n")
+
+
+
+def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
+
+    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
+        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
+
+        for dir_path, dir_names, file_names in os.walk(input_text_dir):
+
+            for fn in file_names:
+
+                for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
+
+                    for xml_name in xml_names:
+
+                        if "Temporal" not in xml_name:
+                            raise "Temporal does not existed"
+
+                        print fn
+
+                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
+                        data = anafora.AnaforaData.from_file(xml_path)
+
+                        positive_spans_label_map={}
+
+                        for annotation in data.annotations:
+                            if annotation.type == 'EVENT':
+
+                                startoffset = annotation.spans[0][0]
+                                endoffset = annotation.spans[0][1]
+
+                                properties = annotation.properties
+                                pros = {}
+                
+                                for pro_name in properties:
+                                    pro_val = properties.__getitem__(pro_name)
+                                    pros[pro_name] = pro_val
+
+                                if input_name == "type":
+                                    label = Type[pros["Type"]]
+                                elif input_name == "polarity":
+                                    label = Polarity[pros["Polarity"]]
+                                elif input_name == "degree":
+                                    label = Degree[pros["Degree"]]
+                                elif input_name == "modality":
+                                    label = ContextualModality[pros["ContextualModality"]]
+
+                                positive_spans_label_map[(startoffset,endoffset)] = label
+
+                        with open(os.path.join(input_text_dir, fn), 'r') as f:
+                            content = f.read()
+
+                        all_spans = content2span(content)
+                        for span in all_spans:
+                            feats = feature_generation_1(content, span[0], span[1], window_size)
+                            feats = "\"" +feats+"\""
+                            if span not in positive_spans_label_map:
+                                label = "\"" +"4"+"\""
+                                span_label = "1"
+                            else:
+                                label = "\"" +positive_spans_label_map[span]+"\""
+                                span_label = "2"
+
+                            csvf.write(label+","+feats+"\n")
+
+                            span_label = "\"" +span_label+"\""
+                            csvs.write(span_label+","+feats+"\n")
 
