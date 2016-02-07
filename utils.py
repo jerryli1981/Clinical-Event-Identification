@@ -381,7 +381,7 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                                 startoffset = annotation.spans[0][0]
                                 endoffset = annotation.spans[0][1]
 
-                                ext_positive += 1
+                                
 
                                 properties = annotation.properties
                                 pros = {}
@@ -417,6 +417,7 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                                 ext_negative += 1
                                 label = negative_span_label_map[span]
                             else:
+                                ext_positive += 1
                                 label = positive_span_label_map[span]
 
                             if num_feats == 2:
@@ -472,7 +473,7 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                                 startoffset = annotation.spans[0][0]
                                 endoffset = annotation.spans[0][1]
 
-                                ext_positive += 1
+                                
 
                                 properties = annotation.properties
                                 pros = {}
@@ -500,6 +501,7 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                                 ext_negative += 1
                                 label = "0 4 4 3 5"
                             else:
+                                ext_positive += 1
                                 label = positive_span_label_map[span]
 
                             if num_feats == 2:
@@ -680,5 +682,5 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
 
                             span_label = "\"" +span_label+"\""
                             csvs.write(span_label+","+feats+"\n")
-                            
+
             pbar.finish()
