@@ -38,9 +38,9 @@ if __name__ == '__main__':
 
     if input_name != None:
 
-        #preprocess_train_data_torch(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train")
-        #preprocess_train_data_torch(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev")
-        #preprocess_test_data_torch(text_dir_test, ann_dir_test, data_dir, window_size, input_name, "test")
+        preprocess_train_data_torch(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train")
+        preprocess_train_data_torch(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev")
+        preprocess_test_data_torch(text_dir_test, ann_dir_test, data_dir, window_size, input_name, "test")
 
         os.system('th csv2t7b.lua -input ./data/span_train.csv -output ./data/span_train.t7b')
         os.system('th csv2t7b.lua -input ./data/span_dev.csv -output ./data/span_dev.t7b')
