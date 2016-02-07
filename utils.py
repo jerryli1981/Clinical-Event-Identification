@@ -350,7 +350,7 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in file_names:
+            for fn in sorted(file_names):
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -437,7 +437,7 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in file_names:
+            for fn in sorted(file_names):
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -511,7 +511,7 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in file_names:
+            for fn in sorted(file_names):
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -599,7 +599,7 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in file_names:
+            for fn in sorted(file_names):
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
