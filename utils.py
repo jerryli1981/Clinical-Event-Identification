@@ -342,7 +342,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
     return X, Y_labels, seqlen, num_feats
 
-def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2, shuffle = False):
+def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2, Shuffle = False):
 
     ext_positive = 0
     ext_negative=0
@@ -409,7 +409,7 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
 
-                        if shuffle:
+                        if Shuffle:
                             shuffle(merged_spans)
 
                         for span in merged_spans:
@@ -434,7 +434,7 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
     print "Extract positive events is %d"%ext_positive
     print "Extract negative events is %d"%ext_negative
 
-def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type, shuffle):
+def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type, Shuffle):
 
     with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
         open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
@@ -498,7 +498,7 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
 
-                        if shuffle:
+                        if Shuffle:
                             shuffle(merged_spans)
 
                         for span in merged_spans: 
