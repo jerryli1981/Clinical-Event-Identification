@@ -357,15 +357,14 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                     for xml_name in xml_names:
 
                         if "Temporal" not in xml_name:
-                            raise "Temporal does not existed"
+                            continue
 
                         print fn
 
-                        xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
+                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
 
-
-                        positive_spans_label_map={}
+                        positive_span_label_map={}
 
                         for annotation in data.annotations:
                             if annotation.type == 'EVENT':
@@ -381,17 +380,14 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                                     pro_val = properties.__getitem__(pro_name)
                                     pros[pro_name] = pro_val
              
-                                DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
                                 Type_label = Type[pros["Type"]]
                                 Degree_label = Degree[pros["Degree"]]
                                 Polarity_label = Polarity[pros["Polarity"]]
                                 ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-                                ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
-                                Permanence_label = Permanence[pros["Permanence"]]
         
-                                positive_span_label_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
-                                    +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                    +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
+                                positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
+                                    +Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                    +ContextualModality_label
 
                         with open(os.path.join(input_text_dir, fn), 'r') as f:
                             content = f.read()
@@ -400,24 +396,24 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
 
                         negative_span_label_map={}
                         for span in all_spans:
-                            if span not in positive_span_feat_map:
-                                negative_span_label_map[span] = "0 4 3 3 2 4 3 3"
+                            if span not in positive_span_label_map:
+                                negative_span_label_map[span] = "0 4 4 3 5"
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
                         shuffle(merged_spans)
 
                         for span in all_spans:
 
-                            if span not in positive_span_feat_map:
+                            if span not in positive_span_label_map:
                                 ext_negative += 1
                                 label = negative_span_label_map[span]
                             else:
                                 label = positive_span_label_map[span]
 
                             if num_feats == 2:
-                                feats = feature_generation_2(content, span[0], span[1], window_size)
+                                feat = feature_generation_2(content, span[0], span[1], window_size)
                             elif num_feats == 3:
-                                feats = feature_generation_3(content, span[0], span[1], window_size)
+                                feat = feature_generation_3(content, span[0], span[1], window_size)
 
                             g_feature.write(feat+"\n")
                             g_label.write(label+"\n")
@@ -448,7 +444,7 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
                         print fn
 
-                        xml_path = os.path.join(input_ann_dir, sub_dir, xml_name)
+                        xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
 
 
@@ -468,17 +464,14 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                                     pro_val = properties.__getitem__(pro_name)
                                     pros[pro_name] = pro_val
              
-                                DocTimeRel_label = DocTimeRel[pros["DocTimeRel"]]
                                 Type_label = Type[pros["Type"]]
                                 Degree_label = Degree[pros["Degree"]]
                                 Polarity_label = Polarity[pros["Polarity"]]
                                 ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-                                ContextualAspect_label = ContextualAspect[pros["ContextualAspect"]]
-                                Permanence_label = Permanence[pros["Permanence"]]
         
-                                positive_span_label_map[(startoffset,endoffset)] = feats+"\t"+ "1"+" " \
-                                    +DocTimeRel_label+" "+Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                    +ContextualModality_label+" "+ContextualAspect_label+" "+Permanence_label
+                                positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
+                                   +Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                    +ContextualModality_label
 
                         with open(os.path.join(input_text_dir, fn), 'r') as f:
                             content = f.read()
@@ -491,12 +484,12 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                                 ext_negative += 1
                                 label = negative_span_label_map[span]
                             else:
-                                label = "0 4 3 3 2 4 3 3"
+                                label = "0 4 4 3 5"
 
                             if num_feats == 2:
-                                feats = feature_generation_2(content, span[0], span[1], window_size)
+                                feat = feature_generation_2(content, span[0], span[1], window_size)
                             elif num_feats == 3:
-                                feats = feature_generation_3(content, span[0], span[1], window_size)
+                                feat = feature_generation_3(content, span[0], span[1], window_size)
 
                             g_feature.write(feat+"\n")
                             g_label.write(label+"\n")
