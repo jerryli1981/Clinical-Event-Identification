@@ -381,8 +381,6 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                                 startoffset = annotation.spans[0][0]
                                 endoffset = annotation.spans[0][1]
 
-                                
-
                                 properties = annotation.properties
                                 pros = {}
                                 for pro_name in properties:
@@ -408,10 +406,11 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                             if span not in positive_span_label_map:
                                 negative_span_label_map[span] = "0 4 4 3 5"
 
+
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
                         shuffle(merged_spans)
 
-                        for span in all_spans:
+                        for span in merged_spans:
 
                             if span not in positive_span_label_map:
                                 ext_negative += 1
@@ -473,8 +472,6 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                                 startoffset = annotation.spans[0][0]
                                 endoffset = annotation.spans[0][1]
 
-                                
-
                                 properties = annotation.properties
                                 pros = {}
                                 for pro_name in properties:
@@ -495,7 +492,14 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
                         all_spans = content2span(content)
 
+                        negative_span_label_map={}
                         for span in all_spans:
+                            if span not in positive_span_label_map:
+                                negative_span_label_map[span] = "0 4 4 3 5"
+
+                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
+
+                        for span in merged_spans:
 
                             if span not in positive_span_label_map:
                                 ext_negative += 1
@@ -545,22 +549,13 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
                         with open(os.path.join(input_text_dir, fn), 'r') as f:
                             content = f.read()
 
-                        positive_span_feat_map={}
+                        positive_span_label_map={}
 
                         for annotation in data.annotations:
                             if annotation.type == 'EVENT':
 
                                 startoffset = annotation.spans[0][0]
                                 endoffset = annotation.spans[0][1]
-
-                                feats = feature_generation_1(content, startoffset, endoffset, window_size)
-
-                                if "\n" in feats:
-                                    print feats
-                                    print xml_name
-                                    print annotation.spans
-                                    print content[startoffset:endoffset]
-                                    exit()
 
                                 properties = annotation.properties
                                 pros = {}
@@ -578,31 +573,32 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
                                 elif input_name == "modality":
                                     label = ContextualModality[pros["ContextualModality"]]
 
-                                positive_span_feat_map[(startoffset,endoffset)] = feats + "\t" + label
+                                positive_span_label_map[(startoffset,endoffset)] = label
 
 
                         all_spans = content2span(content)
 
-                        negative_span_feat_map={}
+                        negative_span_label_map={}
                         for span in all_spans:
-                            if span not in positive_span_feat_map:
-                                feats = feature_generation_1(content, span[0], span[1], window_size)
-                                negative_span_feat_map[span] = feats + "\t" + "4"
+                            if span not in positive_span_label_map:
+                                negative_span_label_map[span] = "4"
 
-                        merged_spans = positive_span_feat_map.keys() + negative_span_feat_map.keys()
+                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
                         shuffle(merged_spans)
 
-                        for span in merged_spans:
+                        for span in merged_spans: 
 
-                            if span in positive_span_feat_map:
-                                feats, label = positive_span_feat_map[span].split("\t")
+                            feats = feature_generation_1(content, span[0], span[1], window_size)
+                            if span in positive_span_label_map:
+                                label = positive_span_label_map[span]
                                 span_label = "1"
-                            elif span in negative_span_feat_map:
-                                feats, label = negative_span_feat_map[span].split("\t")
+                            elif span in negative_span_label_map:
+                                label = negative_span_label_map[span]
                                 span_label = "2"
 
                             label = "\"" +label+"\""
                             feats = "\"" +feats+"\""
+
                             csvf.write(label+","+feats+"\n")
 
                             span_label = "\"" +span_label+"\""
@@ -668,7 +664,14 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
                             content = f.read()
 
                         all_spans = content2span(content)
+
+                        negative_span_label_map={}
                         for span in all_spans:
+                            if span not in positive_span_label_map:
+                                negative_span_label_map[span] = "4"
+
+                        merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
+                        for span in merged_spans:
                             feats = feature_generation_1(content, span[0], span[1], window_size)
                             feats = "\"" +feats+"\""
                             if span not in positive_spans_label_map:
