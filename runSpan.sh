@@ -6,7 +6,7 @@ set -x
 ###################
 
 # training params
-epochs=$4
+epochs=$3
 step=0.01
 hiddenDim=50
 minibatch=100
@@ -20,12 +20,6 @@ mode=$2
 export THEANO_FLAGS=mode=FAST_RUN,device=$1,floatX=float32
 
 
-if [ "$3" == "span" ]
-then
-echo "run span"
-
-
-python -u main_lasagne_span_Char.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
+python -u main_lasagne_span.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
                   			--minibatch $minibatch  --mode $mode
 
-fi
