@@ -59,10 +59,13 @@ if __name__ == '__main__':
 
     num_feats=3
 
+    print "Process traing data"
     preprocess_train_data_lasagne(ann_dir_train, text_dir_train, data_dir_train, window_size, num_feats)
-    
+
+    print "Process dev data"
     preprocess_train_data_lasagne(ann_dir_dev, text_dir_dev, data_dir_dev, window_size, num_feats)
 
+    print "Process test data"
     preprocess_test_data_lasagne(ann_dir_test, text_dir_test, data_dir_test, window_size, num_feats)
 
     build_vocab(

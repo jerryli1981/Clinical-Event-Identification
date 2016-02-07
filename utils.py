@@ -5,9 +5,13 @@ import nltk
 import anafora
 import cPickle as pickle
 
+import time
+
 from nltk.tag.perceptron import PerceptronTagger
 
 from random import shuffle
+
+from progressbar import ProgressBar
 
 tokenizer = nltk.tokenize.RegexpTokenizer('\w+|\$[\d\.]+|\S+')
 tagger = PerceptronTagger()
@@ -350,7 +354,12 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in sorted(file_names):
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
+            for i, fn in enumerate(sorted(file_names)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -359,7 +368,7 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                         if "Temporal" not in xml_name:
                             continue
 
-                        print fn
+                        #print fn
 
                         xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
@@ -418,6 +427,8 @@ def preprocess_train_data_lasagne(input_ann_dir, input_text_dir, outDir, window_
                             g_feature.write(feat+"\n")
                             g_label.write(label+"\n")
 
+            pbar.finish()
+
     print "Extract positive events is %d"%ext_positive
     print "Extract negative events is %d"%ext_negative
 
@@ -433,7 +444,12 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in sorted(file_names):
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
+            for i, fn in enumerate(sorted(file_names)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -442,13 +458,13 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
                         if "Temporal" not in xml_name:
                             raise "Temporal does not existed"
 
-                        print fn
+                        #print fn
 
                         xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
 
 
-                        positive_spans_label_map={}
+                        positive_span_label_map={}
 
                         for annotation in data.annotations:
                             if annotation.type == 'EVENT':
@@ -482,9 +498,9 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
                             if span not in positive_span_label_map:
                                 ext_negative += 1
-                                label = negative_span_label_map[span]
-                            else:
                                 label = "0 4 4 3 5"
+                            else:
+                                label = positive_span_label_map[span]
 
                             if num_feats == 2:
                                 feat = feature_generation_2(content, span[0], span[1], window_size)
@@ -493,6 +509,8 @@ def preprocess_test_data_lasagne(input_ann_dir, input_text_dir, outDir, window_s
 
                             g_feature.write(feat+"\n")
                             g_label.write(label+"\n")
+
+            pbar.finish()
 
     print "Extract positive events is %d"%ext_positive
     print "Extract negative events is %d"%ext_negative
@@ -504,7 +522,12 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in sorted(file_names):
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
+            for i, fn in enumerate(sorted(file_names)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -513,7 +536,7 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
                         if "Temporal" not in xml_name:
                             continue
 
-                        print fn
+                        #print fn
                         xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
 
@@ -583,6 +606,8 @@ def preprocess_train_data_torch(input_text_dir, input_ann_dir, outDir, window_si
                             span_label = "\"" +span_label+"\""
                             csvs.write(span_label+","+feats+"\n")
 
+            pbar.finish()
+
 
 
 def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
@@ -592,7 +617,12 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
-            for fn in sorted(file_names):
+            pbar = ProgressBar(maxval=len(file_names)).start()
+
+            for i, fn in enumerate(sorted(file_names)):
+
+                time.sleep(0.01)
+                pbar.update(i + 1)
 
                 for sub_dir, text_name, xml_names in anafora.walk(os.path.join(input_ann_dir, fn)):
 
@@ -601,7 +631,7 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
                         if "Temporal" not in xml_name:
                             raise "Temporal does not existed"
 
-                        print fn
+                        #print fn
 
                         xml_path = os.path.join(input_ann_dir, text_name, xml_name)
                         data = anafora.AnaforaData.from_file(xml_path)
@@ -650,4 +680,5 @@ def preprocess_test_data_torch(input_text_dir, input_ann_dir, outDir, window_siz
 
                             span_label = "\"" +span_label+"\""
                             csvs.write(span_label+","+feats+"\n")
-
+                            
+            pbar.finish()
