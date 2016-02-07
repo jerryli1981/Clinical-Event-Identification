@@ -183,7 +183,7 @@ if __name__ == '__main__':
     ann_dir_dev = os.path.join(ann_dir, "Dev")
     ann_dir_test = os.path.join(ann_dir, "Test")
 
-    window_size = 3
+    window_size = 6
 
     preprocess_train_data(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train")
     preprocess_train_data(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev")

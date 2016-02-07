@@ -10,25 +10,25 @@ config = {}
 
 local alphabet = "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+-=<>()[]{}"
 
-seq_length = 40
+seq_length = 70
 
 -- Training data
 config.train_data = {}
-config.train_data.file = paths.cwd() .. "/data/type_train.t7b"
+config.train_data.file = paths.cwd() .. "/data6/type_train.t7b"
 config.train_data.alphabet = alphabet
 config.train_data.length = seq_length
 config.train_data.batch_size = 128
 
 -- Validation data
 config.val_data = {}
-config.val_data.file =  paths.cwd() .. "/data/type_dev.t7b"
+config.val_data.file =  paths.cwd() .. "/data6/type_dev.t7b"
 config.val_data.alphabet = alphabet
 config.val_data.length = seq_length
 config.val_data.batch_size = 128
 
 -- Test data
 config.test_data = {}
-config.test_data.file =  paths.cwd() .. "/data/type_test.t7b"
+config.test_data.file =  paths.cwd() .. "/data6/type_test.t7b"
 config.test_data.alphabet = alphabet
 config.test_data.length = seq_length
 config.test_data.batch_size = 128
@@ -38,11 +38,11 @@ config.model = {}
 -- #alphabet x 1014
 config.model[1] = {module = "nn.TemporalConvolution", inputFrameSize = #alphabet, outputFrameSize = 256, kW = 5}
 config.model[2] = {module = "nn.Threshold"}
-config.model[3] = {module = "nn.TemporalMaxPooling", kW = 2, dW = 2}
+config.model[3] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 3}
 -- 336 x 256
 config.model[4] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 5}
 config.model[5] = {module = "nn.Threshold"}
-config.model[6] = {module = "nn.TemporalMaxPooling", kW = 2, dW = 2}
+config.model[6] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 3}
 -- 110 x 256
 config.model[7] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 2}
 config.model[8] = {module = "nn.Threshold"}
