@@ -146,7 +146,7 @@ if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.realpath(__file__))
     data_dir = os.path.join(base_dir, 'data')
 
-    model_dir = os.path.join(base_dir, 'models_single')
+    model_dir = os.path.join(base_dir, 'models_span')
     if not os.path.exists(model_dir):
             os.makedirs(model_dir)
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
         train_fn, val_fn, network = event_span_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        print("Starting training modality model...")
+        print("Starting training span model...")
         best_val_acc = 0
 
         maxlen_train = 0

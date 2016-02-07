@@ -293,27 +293,21 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
         vocab[word] = idx
 
     Event_label = []
-    DocTimeRel_label = []
     Type_label = []
     Degree_label = []
     Polarity_label = []
     ContextualModality_label = []
-    ContextualAspect_label = []
-    Permanence_label = []
 
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
         f1.readline()                 
         for i, (a, label) in enumerate(zip(f1,f4)):
 
-            l0, l1, l2, l3, l4, l5, l6, l7 = label.rstrip('\n').split()
+            l0, l1, l2, l3, l4 = label.rstrip('\n').split()
             Event_label.append(l0)
-            DocTimeRel_label.append(l1)
-            Type_label.append(l2)
-            Degree_label.append(l3)
-            Polarity_label.append(l4)
-            ContextualModality_label.append(l5)
-            ContextualAspect_label.append(l6)
-            Permanence_label.append(l7)
+            Type_label.append(l1)
+            Degree_label.append(l2)
+            Polarity_label.append(l3)
+            ContextualModality_label.append(l4)
 
             toks_a = a.rstrip('\n').split()
             assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
@@ -326,19 +320,16 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    Y_labels = np.zeros((X.shape[0], 31))
+    Y_labels = np.zeros((X.shape[0], 18))
     for i in range(X.shape[0]):
 
         Y_labels[i, int(Event_label[i])] = 1
-        Y_labels[i, 2+int(DocTimeRel_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + int(Type_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + int(Degree_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + int(Polarity_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + int(ContextualAspect_label[i])] = 1
-        Y_labels[i, 2+len(DocTimeRel) + len(Type) + len(Degree) + len(Polarity) + len(ContextualModality) + len(ContextualAspect) + int(Permanence_label[i])] = 1
+        Y_labels[i, 2+int(Type_label[i])-1] = 1
+        Y_labels[i, 2+len(Type) + int(Degree_label[i])-1] = 1
+        Y_labels[i, 2+len(Type) + len(Degree) + int(Polarity_label[i])-1] = 1
+        Y_labels[i, 2+len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])-1] = 1
 
-    assert 2+len(DocTimeRel)+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality)+len(ContextualAspect) + len(Permanence) == 31, "length error"
+    assert 2+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality) + 4 == 18, "length error"
 
     return X, Y_labels, seqlen, num_feats
 
@@ -520,3 +511,45 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                             csvs.write(span_label+","+feats+"\n")
 
             pbar.finish()
+
+# this method need keep for submit results
+def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    seqlen = 2*window_size+1
+    with open(os.path.join(test_dir, fn), 'r') as f:
+
+        content = f.read()
+        Spans = content2span(content)
+
+        X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
+
+        for i, span in enumerate(Spans):
+
+            if num_feats == 2:
+                feats = feature_generation_2(content, span[0], span[1], window_size)
+            elif num_feats == 3:
+                feats = feature_generation_3(content, span[0], span[1], window_size)
+
+            toks_a = feats.split()
+            step = 0
+            for j in range(seqlen):
+
+                for k in range(num_feats):
+                    X[i, j, k] = vocab[toks_a[step+k]]
+
+                step += num_feats
+
+        return Spans, X
