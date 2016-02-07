@@ -14,7 +14,8 @@ ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":
 
 def preprocess_train_data(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
 
-    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf:
+    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
+        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
@@ -85,17 +86,24 @@ def preprocess_train_data(input_text_dir, input_ann_dir, outDir, window_size, in
 
                             if span in positive_span_feat_map:
                                 feats, label = positive_span_feat_map[span].split("\t")
+                                span_label = "1"
                             elif span in negative_span_feat_map:
                                 feats, label = negative_span_feat_map[span].split("\t")
+                                span_label = "2"
 
                             label = "\"" +label+"\""
                             feats = "\"" +feats+"\""
                             csvf.write(label+","+feats+"\n")
 
+                            span_label = "\"" +span_label+"\""
+                            csvs.write(span_label+","+feats+"\n")
+
+
 
 def preprocess_test_data(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type):
 
-    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf:
+    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
+        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
@@ -148,10 +156,15 @@ def preprocess_test_data(input_text_dir, input_ann_dir, outDir, window_size, inp
                             feats = "\"" +feats+"\""
                             if span not in positive_spans_label_map:
                                 label = "\"" +"4"+"\""
+                                span_label = "1"
                             else:
                                 label = "\"" +positive_spans_label_map[span]+"\""
+                                span_label = "2"
 
                             csvf.write(label+","+feats+"\n")
+
+                            span_label = "\"" +span_label+"\""
+                            csvs.write(span_label+","+feats+"\n")
 
 if __name__ == '__main__':
 
@@ -183,7 +196,7 @@ if __name__ == '__main__':
     ann_dir_dev = os.path.join(ann_dir, "Dev")
     ann_dir_test = os.path.join(ann_dir, "Test")
 
-    window_size = 6
+    window_size = 5
 
     preprocess_train_data(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train")
     preprocess_train_data(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev")

@@ -184,7 +184,7 @@ function main.test()
    main.test:run(main.testlog)
    preds = main.test.predLabels
 
-   local preds_out = torch.DiskFile(paths.cwd() .. "/decisions.txt", 'w')
+   local preds_out = torch.DiskFile(paths.cwd() .. "/span_decisions.txt", 'w')
    for i = 1, preds:size(1) do
     preds_out:writeString(preds[i] .. "\n")
    end
