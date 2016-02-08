@@ -434,8 +434,7 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
 
     maxchar = 0
 
-    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
-        open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
+    with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf:
 
         for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
@@ -507,18 +506,14 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
 
                             if span in positive_span_label_map:
                                 label = positive_span_label_map[span]
-                                span_label = "1"
+
                             elif span in negative_span_label_map:
                                 label = negative_span_label_map[span]
-                                span_label = "2"
 
                             label = "\"" +label+"\""
                             feats = "\"" +feats+"\""
 
                             csvf.write(label+","+feats+"\n")
-
-                            span_label = "\"" +span_label+"\""
-                            csvs.write(span_label+","+feats+"\n")
 
             pbar.finish()
 

@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
         pbar = ProgressBar(maxval=len(file_names)).start()
 
-        for i, fn in enumerate(file_names):
+        for i, fn in enumerate(sorted(file_names)):
 
             time.sleep(0.01)
             pbar.update(i + 1)
@@ -113,7 +113,6 @@ if __name__ == '__main__':
          
                         for span in merged_spans:
                             span_label = predict_span[labelidx]
-
                             type_label = predict_type[labelidx]
                             labelidx += 1
 
