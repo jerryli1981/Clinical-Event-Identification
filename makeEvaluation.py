@@ -6,11 +6,6 @@ from datetime import datetime
 
 import anafora
 
-Type={"N/A":"1", "ASPECTUAL":"2", "EVIDENTIAL":"3"}
-Degree = {"N/A":"1", "MOST":"2", "LITTLE":"3"}
-Polarity = {"POS":"1", "NEG":"2"}
-ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":"4"}
-
 if __name__ == '__main__':
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -70,15 +65,8 @@ if __name__ == '__main__':
                             for pro_name in properties:
                                 pro_val = properties.__getitem__(pro_name)
                                 pros[pro_name] = pro_val
-         
-                            Type_label = Type[pros["Type"]]
-                            Degree_label = Degree[pros["Degree"]]
-                            Polarity_label = Polarity[pros["Polarity"]]
-                            ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-    
-                            positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
-                                +Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                +ContextualModality_label
+             
+                            positive_span_label_map[(startoffset,endoffset)] = "1"
 
                     with open(os.path.join(input_text_dir, fn), 'r') as f:
                         content = f.read()
@@ -88,7 +76,7 @@ if __name__ == '__main__':
                     negative_span_label_map={}
                     for span in all_spans:
                         if span not in positive_span_label_map:
-                            negative_span_label_map[span] = "0 4 4 3 5"
+                            negative_span_label_map[span] = "0"
 
 
                     merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
@@ -110,12 +98,11 @@ if __name__ == '__main__':
                         f.write("<annotations>\n\n\n")
 
                         count = 1
-         
+
                         for span in merged_spans:
                             span_label = predict_span[labelidx]
                             type_label = predict_type[labelidx]
                             labelidx += 1
-
                             if span_label == 1:
                                 f.write("\t<entity>\n")
                                 f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
