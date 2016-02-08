@@ -169,7 +169,7 @@ if __name__ == '__main__':
     target_var = T.fmatrix('targets')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings.astype(np.float32)[:3, :]
+    wordEmbeddings = wordEmbeddings.astype(np.float32)
 
     if args.mode == "train":
 
@@ -246,76 +246,6 @@ if __name__ == '__main__':
                 best_val_acc = val_score
                 print "Saving model......"
                 save_network(model_save_path+".span",get_all_param_values(network))
-
-                """                
-                # get real performance
-                pred_fn = theano.function([input_var], T.argmax(get_output(network, deterministic=True), axis=1))
-                ann_dir = os.path.join(base_dir, 'annotation/coloncancer')
-                plain_dir = os.path.join(base_dir, 'original')
-                output_dir = os.path.join(base_dir, 'uta-output-span-validate')
-                window_size = (seqlen-1)/2
-
-                input_text_dev_dir = os.path.join(plain_dir, "dev")
-
-                totalPredEvents = 0
-                totalCorrEvents = 0
-
-
-                for dir_path, dir_names, file_names in os.walk(input_text_dev_dir):
-
-                    pbar = ProgressBar(maxval=len(file_names)).start()
-
-                    for i, fn in enumerate(sorted(file_names)):
-                        time.sleep(0.01)
-                        pbar.update(i + 1)
-                        
-                        spans, features = generateTestInput(data_dir, input_text_dev_dir, fn, window_size, num_feats)
-                        totalPredEvents += len(spans)
-                        predict = pred_fn(features)
-
-                        dn = os.path.join(output_dir, fn)
-                        if not os.path.exists(dn):
-                            os.makedirs(dn)
-
-                        outputAnn_path = os.path.join(dn, fn+"."+"Temporal-Relation.system.complete.xml")
-                        with open(outputAnn_path, 'w') as f:
-                            f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n\n")
-                            f.write("<data>\n")
-                            f.write("<info>\n")
-                            f.write("  <savetime>"+datetime.now().strftime('%H:%M:%S %d-%m-%Y')+"</savetime>\n")
-                            f.write("  <progress>completed</progress>\n")
-                            f.write("</info>"+"\n\n\n")
-                            f.write("<schema path=\"./\" protocal=\"file\">temporal-schema.xml</schema>\n\n\n")
-                            f.write("<annotations>\n\n\n")
-                            count=0
-                            for idx, span_label in enumerate(predict):
-                                if span_label == 1:
-                                    totalCorrEvents += 1
-                                    f.write("\t<entity>\n")
-                                    f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
-                                    f.write("\t\t<span>"+str(spans[idx][0])+","+str(spans[idx][1])+"</span>\n")
-                                    f.write("\t\t<type>EVENT</type>\n")
-                                    f.write("\t\t<parentsType></parentsType>\n")
-                                    f.write("\t\t<properties>\n")
-                                    f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
-                                    f.write("\t\t\t<Type>N/A</Type>\n")
-                                    f.write("\t\t\t<Degree>N/A</Degree>\n")
-                                    f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                                    f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
-                                    f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
-                                    f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
-                                    f.write("\t\t</properties>\n")
-                                    f.write("\t</entity>\n\n")
-                                    count += 1
-                            f.write("\n\n</annotations>\n")
-                            f.write("</data>")
-
-                    pbar.finish()
-
-                print "Total pred events is %d"%totalPredEvents
-                print "Total corr events is %d"%totalCorrEvents
-                os.system("python -m anafora.evaluate -r annotation/coloncancer/Dev/ -p uta-output-span-validate/")
-                """
 
     elif args.mode == "test":
 

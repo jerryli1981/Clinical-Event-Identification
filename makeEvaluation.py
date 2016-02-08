@@ -30,7 +30,7 @@ if __name__ == '__main__':
 
 
     predict_type = []
-    with open(os.path.join(base_dir, 'type_decision.txt') )as f:
+    with open(os.path.join(base_dir, 'type_decisions.txt') )as f:
         for l in f:
             predict_type.append(int(l.strip()))
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
                                 elif type_label == 3:
                                     f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
                                 else:
-                                    raise "wrong type label"
+                                    f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
 
                                 f.write("\t\t\t<Degree>N/A</Degree>\n")
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")

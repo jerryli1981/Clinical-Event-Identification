@@ -67,7 +67,7 @@ config.model[20] = {module = "nn.Linear", inputSize = 128, outputSize = 128}
 config.model[21] = {module = "nn.Threshold"}
 config.model[22] = {module = "nn.Dropout", p = 0.5}
 -- 1024
-config.model[23] = {module = "nn.Linear", inputSize = 128, outputSize = 2}
+config.model[23] = {module = "nn.Linear", inputSize = 128, outputSize = 4}
 config.model[24] = {module = "nn.LogSoftMax"}
 
 -- The loss
@@ -88,7 +88,7 @@ config.test.confusion = true
 -- Main program
 config.main = {}
 config.main.eras = 1
-config.main.epoches = 10
+config.main.epoches = 5000
 config.main.randomize = 5e-2
 config.main.dropout = true
 config.main.save = paths.cwd() .. "/models"
