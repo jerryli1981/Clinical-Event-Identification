@@ -32,7 +32,7 @@ if __name__ == '__main__':
     ann_dir_dev = os.path.join(ann_dir, "Dev")
     ann_dir_test = os.path.join(ann_dir, "Test")
 
-    window_size = 3
+    window_size = 5
 
     input_name = args.input
 

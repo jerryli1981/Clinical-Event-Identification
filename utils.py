@@ -417,6 +417,11 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
                             elif num_feats == 3:
                                 feat = feature_generation_3(content, span[0], span[1], window_size)
 
+                            seqlen = 2*window_size+1
+
+                            toks_a = feat.rstrip('\n').split()
+                            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
+
                             g_feature.write(feat+"\n")
                             g_label.write(label+"\n")
 
@@ -511,45 +516,3 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                             csvs.write(span_label+","+feats+"\n")
 
             pbar.finish()
-
-# this method need keep for submit results
-def generateTestInput(dataset_dir, test_dir, fn, window_size, num_feats):
-
-    from collections import defaultdict
-    words = defaultdict(int)
-
-    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
-
-    with open(vocab_path, 'r') as f:
-        for tok in f:
-            words[tok.rstrip('\n')] += 1
-
-    vocab = {}
-    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
-        vocab[word] = idx
-
-    seqlen = 2*window_size+1
-    with open(os.path.join(test_dir, fn), 'r') as f:
-
-        content = f.read()
-        Spans = content2span(content)
-
-        X = np.zeros((len(Spans), seqlen, num_feats), dtype=np.int16)
-
-        for i, span in enumerate(Spans):
-
-            if num_feats == 2:
-                feats = feature_generation_2(content, span[0], span[1], window_size)
-            elif num_feats == 3:
-                feats = feature_generation_3(content, span[0], span[1], window_size)
-
-            toks_a = feats.split()
-            step = 0
-            for j in range(seqlen):
-
-                for k in range(num_feats):
-                    X[i, j, k] = vocab[toks_a[step+k]]
-
-                step += num_feats
-
-        return Spans, X
