@@ -432,6 +432,8 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
 
 def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type, Shuffle):
 
+    maxchar = 0
+
     with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf, \
         open(os.path.join(outDir, "span_"+input_type+".csv"), 'w') as csvs:
 
@@ -500,6 +502,9 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                         for span in merged_spans: 
 
                             feats = feature_generation_1(content, span[0], span[1], window_size)
+                            if maxchar < len(feats):
+                                maxchar = len(feats)
+
                             if span in positive_span_label_map:
                                 label = positive_span_label_map[span]
                                 span_label = "1"
@@ -516,3 +521,5 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                             csvs.write(span_label+","+feats+"\n")
 
             pbar.finish()
+
+    print "max char is: " + str(maxchar)
