@@ -265,8 +265,23 @@ if __name__ == '__main__':
         set_all_param_values(network, saved_params)
 
         pred_fn = theano.function([input_var], T.argmax(get_output(network, deterministic=True), axis=1))
-        
-        predict = pred_fn(X_test)
+
         with open(os.path.join(base_dir, 'span_decision.txt'), 'w') as predFile:
-            for span_label in predict:
+
+            for i, batch in enumerate(iterate_minibatches_((X_test, Y_labels_test), args.minibatch, shuffle=True)):
+
+                inputs, labels= batch
+
+                predict = pred_fn(inputs)
+            
+                for span_label in predict:
+                    predFile.write(str(span_label)+"\n")
+
+            left = X_test[(i+1)*args.minibatch:]
+            predict_left = pred_fn(left)
+
+            for span_label in predict_left:
                 predFile.write(str(span_label)+"\n")
+
+
+
