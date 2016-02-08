@@ -293,10 +293,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
         vocab[word] = idx
 
     Event_label = []
-    Type_label = []
-    Degree_label = []
-    Polarity_label = []
-    ContextualModality_label = []
+
 
     with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
         f1.readline()                 
@@ -304,10 +301,6 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
             l0, l1, l2, l3, l4 = label.rstrip('\n').split()
             Event_label.append(l0)
-            Type_label.append(l1)
-            Degree_label.append(l2)
-            Polarity_label.append(l3)
-            ContextualModality_label.append(l4)
 
             toks_a = a.rstrip('\n').split()
             assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
@@ -320,16 +313,10 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
 
                 step += num_feats
          
-    Y_labels = np.zeros((X.shape[0], 18))
+    Y_labels = np.zeros((X.shape[0], 2))
     for i in range(X.shape[0]):
 
         Y_labels[i, int(Event_label[i])] = 1
-        Y_labels[i, 2+int(Type_label[i])-1] = 1
-        Y_labels[i, 2+len(Type) + int(Degree_label[i])-1] = 1
-        Y_labels[i, 2+len(Type) + len(Degree) + int(Polarity_label[i])-1] = 1
-        Y_labels[i, 2+len(Type) + len(Degree) + len(Polarity) + int(ContextualModality_label[i])-1] = 1
-
-    assert 2+len(Type)+len(Degree)+len(Polarity)+len(ContextualModality) + 4 == 18, "length error"
 
     return X, Y_labels, seqlen, num_feats
 
@@ -377,15 +364,8 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
                                 for pro_name in properties:
                                     pro_val = properties.__getitem__(pro_name)
                                     pros[pro_name] = pro_val
-             
-                                Type_label = Type[pros["Type"]]
-                                Degree_label = Degree[pros["Degree"]]
-                                Polarity_label = Polarity[pros["Polarity"]]
-                                ContextualModality_label = ContextualModality[pros["ContextualModality"]]
-        
-                                positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
-                                    +Type_label+" "+Degree_label+" "+Polarity_label +" " \
-                                    +ContextualModality_label
+
+                                positive_span_label_map[(startoffset,endoffset)] = "1"
 
                         with open(os.path.join(input_text_dir, fn), 'r') as f:
                             content = f.read()
@@ -395,8 +375,7 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
                         negative_span_label_map={}
                         for span in all_spans:
                             if span not in positive_span_label_map:
-                                negative_span_label_map[span] = "0 4 4 3 5"
-
+                                negative_span_label_map[span] = "0"
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
 
@@ -501,6 +480,7 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                         for span in merged_spans: 
 
                             feats = feature_generation_1(content, span[0], span[1], window_size)
+                            
                             if maxchar < len(feats):
                                 maxchar = len(feats)
 

@@ -172,7 +172,7 @@ if __name__ == '__main__':
     target_var = T.fmatrix('targets')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings.astype(np.float32)[:3, :]
+    wordEmbeddings = wordEmbeddings.astype(np.float32)
 
     if args.mode == "train":
 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
                 pbar.update(i + 1)
 
                 inputs, labels= batch
-                train_loss += train_fn(inputs, labels[:,0:2])
+                train_loss += train_fn(inputs, labels)
                 train_batches += 1
 
             pbar.finish()
@@ -229,7 +229,7 @@ if __name__ == '__main__':
 
                 inputs, labels= batch
 
-                loss, acc = val_fn(inputs, labels[:,0:2])
+                loss, acc = val_fn(inputs, labels)
                 val_acc += acc
                 val_loss += loss
 
@@ -271,7 +271,7 @@ if __name__ == '__main__':
 
         with open(os.path.join(base_dir, 'span_decision.txt'), 'w') as predFile:
 
-            for i, batch in enumerate(iterate_minibatches_((X_test, Y_labels_test), args.minibatch, shuffle=True)):
+            for i, batch in enumerate(iterate_minibatches_((X_test, Y_labels_test), args.minibatch, shuffle=False)):
 
                 inputs, labels= batch
 
