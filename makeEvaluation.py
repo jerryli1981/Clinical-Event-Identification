@@ -5,6 +5,12 @@ import time
 from datetime import datetime
 
 import anafora
+
+Type={"N/A":"1", "ASPECTUAL":"2", "EVIDENTIAL":"3"}
+Degree = {"N/A":"1", "MOST":"2", "LITTLE":"3"}
+Polarity = {"POS":"1", "NEG":"2"}
+ContextualModality = {"ACTUAL":"1", "HYPOTHETICAL":"2", "HEDGED":"3", "GENERIC":"4"}
+
 if __name__ == '__main__':
 
     base_dir = os.path.dirname(os.path.realpath(__file__))
@@ -13,19 +19,25 @@ if __name__ == '__main__':
 
     output_dir = os.path.join(base_dir, 'output')
 
-    input_text_test_dir = os.path.join(plain_dir, "test")
+    input_text_dir = os.path.join(plain_dir, "test")
 
     ann_dir = os.path.join(base_dir, 'annotation/coloncancer/Test')
 
-    predict = []
-    with open(os.path.join(base_dir, 'span_decisions.txt') )as f:
+    predict_span = []
+    with open(os.path.join(base_dir, 'span_decision.txt') )as f:
         for l in f:
-            predict.append(int(l.strip()))
+            predict_span.append(int(l.strip()))
+
+
+    predict_type = []
+    with open(os.path.join(base_dir, 'type_decision.txt') )as f:
+        for l in f:
+            predict_type.append(int(l.strip()))
+
 
     labelidx = 0
     
-
-    for dir_path, dir_names, file_names in os.walk(input_text_test_dir):
+    for dir_path, dir_names, file_names in os.walk(input_text_dir):
 
         pbar = ProgressBar(maxval=len(file_names)).start()
 
@@ -39,10 +51,48 @@ if __name__ == '__main__':
 
                 for xml_name in xml_names:
 
-                    with open(os.path.join(input_text_test_dir, fn), 'r') as f:
+                    if "Temporal" not in xml_name:
+                        continue
+
+                    xml_path = os.path.join(ann_dir, text_name, xml_name)
+                    data = anafora.AnaforaData.from_file(xml_path)
+
+                    positive_span_label_map={}
+
+                    for annotation in data.annotations:
+                        if annotation.type == 'EVENT':
+
+                            startoffset = annotation.spans[0][0]
+                            endoffset = annotation.spans[0][1]
+
+                            properties = annotation.properties
+                            pros = {}
+                            for pro_name in properties:
+                                pro_val = properties.__getitem__(pro_name)
+                                pros[pro_name] = pro_val
+         
+                            Type_label = Type[pros["Type"]]
+                            Degree_label = Degree[pros["Degree"]]
+                            Polarity_label = Polarity[pros["Polarity"]]
+                            ContextualModality_label = ContextualModality[pros["ContextualModality"]]
+    
+                            positive_span_label_map[(startoffset,endoffset)] = "1"+" " \
+                                +Type_label+" "+Degree_label+" "+Polarity_label +" " \
+                                +ContextualModality_label
+
+                    with open(os.path.join(input_text_dir, fn), 'r') as f:
                         content = f.read()
 
-                    spans = content2span(content)
+                    all_spans = content2span(content)
+
+                    negative_span_label_map={}
+                    for span in all_spans:
+                        if span not in positive_span_label_map:
+                            negative_span_label_map[span] = "0 4 4 3 5"
+
+
+                    merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
+
 
                     dn = os.path.join(output_dir, fn)
                     if not os.path.exists(dn):
@@ -61,11 +111,13 @@ if __name__ == '__main__':
 
                         count = 1
          
-                        for span in spans:
-                            label = predict[labelidx]
+                        for span in merged_spans:
+                            span_label = predict_span[labelidx]
+
+                            type_label = predict_type[labelidx]
                             labelidx += 1
 
-                            if label == 1:
+                            if span_label == 1:
                                 f.write("\t<entity>\n")
                                 f.write("\t\t<id>"+str(count)+"@"+fn+"@system"+"</id>\n")
                                 f.write("\t\t<span>"+str(span[0])+","+str(span[1])+"</span>\n")
@@ -73,7 +125,16 @@ if __name__ == '__main__':
                                 f.write("\t\t<parentsType></parentsType>\n")
                                 f.write("\t\t<properties>\n")
                                 f.write("\t\t\t<DocTimeRel>BEFORE</DocTimeRel>\n")
-                                f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
+
+                                if type_label == 1:
+                                    f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
+                                elif type_label == 2:
+                                    f.write("\t\t\t<Type>"+"ASPECTUAL"+"</Type>\n")
+                                elif type_label == 3:
+                                    f.write("\t\t\t<Type>"+"EVIDENTIAL"+"</Type>\n")
+                                else:
+                                    raise "wrong type label"
+
                                 f.write("\t\t\t<Degree>N/A</Degree>\n")
                                 f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
                                 f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")

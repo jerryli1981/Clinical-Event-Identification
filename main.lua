@@ -184,7 +184,7 @@ function main.test()
    main.test:run(main.testlog)
    preds = main.test.predLabels
 
-   local preds_out = torch.DiskFile(paths.cwd() .. "/span_decisions.txt", 'w')
+   local preds_out = torch.DiskFile(paths.cwd() .. "/type_decisions.txt", 'w')
    for i = 1, preds:size(1) do
     preds_out:writeString(preds[i] .. "\n")
    end
@@ -192,81 +192,6 @@ function main.test()
    preds_out:close()
 
    os.execute("python makeEvaluation.py")
-
-   --[[
-
-   fs = paths.iterdirs(paths.cwd() .. "/annotation/coloncancer/Test")
-   idx = 0
-
-   allcase = {}
-   for fn in fs do
-      table.insert(allcase,fn)
-   end
-   table.sort(allcase)
-
-   for i=1, #allcase do
-      fn = allcase[i]
-      f_dir = paths.cwd() .. "/annotation/coloncancer/Test/" .. fn
-
-      output_dir = paths.cwd() .. "/output"
-      if lfs.attributes(output_dir) == nil then
-         lfs.mkdir(output_dir)
-      end
-
-      out_dir = output_dir .. "/" .. fn
-      if lfs.attributes(out_dir) == nil then
-         lfs.mkdir(out_dir)
-      end
-
-      xmls = paths.dir(f_dir)
-
-      local xml
-      for i=1, #xmls do
-         tmpxml = xmls[i]
-         if string.find(tmpxml, "Temporal") then
-            xml = tmpxml
-         end
-      end
-
-      local x_n_out = torch.DiskFile(out_dir .. "/" .. xml, 'w')
-      local file = io.open(f_dir .. "/" .. xml, 'r')
-
-      while true do
-       local line = file:read()
-       if line == nil then break end
-
-       if string.find(line, "<Type>N/A</Type>") or 
-         string.find(line, "<Type>ASPECTUAL</Type>")  or string.find(line, "<Type>EVIDENTIAL</Type>") then
-
-         idx = idx + 1
-
-         if preds[idx] == 1 then
-            line = "<Type>" .. "N/A" .. "</Type>"
-         elseif preds[idx] == 2 then
-            line = "<Type>" .. "ASPECTUAL" .. "</Type>"
-         elseif preds[idx] == 3 then
-            line = "<Type>" .. "EVIDENTIAL" .. "</Type>"
-         else 
-            error("Wrong label")         
-         end
-
-       end
-
-       x_n_out:writeString(line .. "\n")
-
-      end    
-
-      file:close()
-      x_n_out:close()
-
-   end
-
-   if idx ~= preds:size(1) then
-      error("Label numer mismatch")
-   end
-
-   os.execute("python -m anafora.evaluate -r annotation/coloncancer/Test/ -p output")
-   --]]
 
 end
 

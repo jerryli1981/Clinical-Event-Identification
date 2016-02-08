@@ -337,6 +337,6 @@ if __name__ == '__main__':
         pred_fn = theano.function([input_var], T.argmax(get_output(network, deterministic=True), axis=1))
         
         predict = pred_fn(X_test)
-        with open(os.path.join(base_dir, 'span_decisition.txt'), 'w') as predFile:
+        with open(os.path.join(base_dir, 'span_decision.txt'), 'w') as predFile:
             for span_label in predict:
                 predFile.write(str(span_label)+"\n")

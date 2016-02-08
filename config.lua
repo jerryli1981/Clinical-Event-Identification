@@ -14,21 +14,21 @@ seq_length = 40
 
 -- Training data
 config.train_data = {}
-config.train_data.file = paths.cwd() .. "/data/span_train.t7b"
+config.train_data.file = paths.cwd() .. "/data/type_train.t7b"
 config.train_data.alphabet = alphabet
 config.train_data.length = seq_length
 config.train_data.batch_size = 128
 
 -- Validation data
 config.val_data = {}
-config.val_data.file =  paths.cwd() .. "/data/span_dev.t7b"
+config.val_data.file =  paths.cwd() .. "/data/type_dev.t7b"
 config.val_data.alphabet = alphabet
 config.val_data.length = seq_length
 config.val_data.batch_size = 128
 
 -- Test data
 config.test_data = {}
-config.test_data.file =  paths.cwd() .. "/data/span_test.t7b"
+config.test_data.file =  paths.cwd() .. "/data/type_test.t7b"
 config.test_data.alphabet = alphabet
 config.test_data.length = seq_length
 config.test_data.batch_size = 128
