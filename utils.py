@@ -299,7 +299,7 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
         f1.readline()                 
         for i, (a, label) in enumerate(zip(f1,f4)):
 
-            l0, l1, l2, l3, l4 = label.rstrip('\n').split()
+            l0 = label.rstrip('\n')
             Event_label.append(l0)
 
             toks_a = a.rstrip('\n').split()
@@ -480,7 +480,7 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                         for span in merged_spans: 
 
                             feats = feature_generation_1(content, span[0], span[1], window_size)
-                            
+
                             if maxchar < len(feats):
                                 maxchar = len(feats)
 
