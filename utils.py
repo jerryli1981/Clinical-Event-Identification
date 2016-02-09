@@ -97,6 +97,18 @@ def iterate_minibatches_(inputs, batchsize, shuffle=False):
             excerpt = slice(start_idx, start_idx + batchsize)
         yield ( input[excerpt] for input in inputs )
 
+def iterate_minibatches_lstm(inputs, inputs_mask, targets, batchsize, shuffle=False):
+    assert len(inputs) == len(targets)
+    if shuffle:
+        indices = np.arange(len(inputs))
+        np.random.shuffle(indices)
+    for start_idx in range(0, len(inputs) - batchsize + 1, batchsize):
+        if shuffle:
+            excerpt = indices[start_idx:start_idx + batchsize]
+        else:
+            excerpt = slice(start_idx, start_idx + batchsize)
+        yield inputs[excerpt], inputs_mask[excerpt], targets[excerpt]
+
 def loadWord2VecMap(word2vec_path):
     with open(word2vec_path,'r') as fid:
         return pickle.load(fid)
@@ -319,6 +331,63 @@ def read_sequence_dataset_onehot(dataset_dir, dataset_name):
         Y_labels[i, int(Event_label[i])] = 1
 
     return X, Y_labels, seqlen, num_feats
+
+def read_sequence_dataset_lstm(dataset_dir, dataset_name):
+
+    a_s = os.path.join(dataset_dir, dataset_name+"/feature.toks")
+    labs = os.path.join(dataset_dir, dataset_name+"/label.txt") 
+
+    with open(a_s) as f:
+        num_feats, window_size = f.readline().strip().split('\t')
+
+    num_feats = int(num_feats)
+    window_size = int(window_size)
+
+    seqlen = 2*window_size+1
+
+    data_size = len([line.rstrip('\n') for line in open(a_s)])
+
+    X = np.zeros((data_size-1, seqlen), dtype=np.int16)
+    X_mask = np.zeros((data_size-1, seqlen), dtype=np.int16)
+
+    from collections import defaultdict
+    words = defaultdict(int)
+
+    vocab_path = os.path.join(dataset_dir, 'vocab-cased.txt')
+
+    with open(vocab_path, 'r') as f:
+        for tok in f:
+            words[tok.rstrip('\n')] += 1
+
+    vocab = {}
+
+    for word, idx in zip(words.iterkeys(), xrange(0, len(words))):
+        vocab[word] = idx
+
+    Event_label = []
+
+    with open(a_s, "rb") as f1, open(labs, 'rb') as f4:
+        f1.readline()                 
+        for i, (a, label) in enumerate(zip(f1,f4)):
+
+            l0 = label.rstrip('\n')
+            Event_label.append(l0)
+
+            toks_a = a.rstrip('\n').split()
+
+            assert len(toks_a) == seqlen*num_feats, "wrong :"+a 
+
+            idx = 0
+            for j in range(2, len(toks_a), num_feats):
+                X[i, idx] = vocab[toks_a[j]]
+                X_mask[i, idx] = 1
+                idx += 1
+  
+    Y_labels = np.zeros((X.shape[0], 2))
+    for i in range(X.shape[0]):
+        Y_labels[i, int(Event_label[i])] = 1
+
+    return X, X_mask, Y_labels, seqlen
 
 def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3, num_feats=2, Shuffle = False):
 
