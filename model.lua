@@ -138,6 +138,8 @@ function Model:createModule(m)
       return Model:createLogSoftMax(m)
    elseif m.module == "nn.LookupTable" then
       return Model:createLookupTable(m)
+   elseif m.module == "nn.Tanh" then
+      return Model:createTanh(m)
    else
       error("Unrecognized module for creation: "..tostring(m.module))
    end
@@ -161,6 +163,8 @@ function Model:makeCleanModule(m)
       return Model:toDropout(m)
    elseif torch.typename(m) == "nn.LookupTable" then
       return Model:toLookupTable(m)
+   elseif torch.typename(m) == "nn.Tanh" then
+      return Model:newTanh()
    else
       error("Module unrecognized")
    end
@@ -169,6 +173,10 @@ end
 -- Create new LookupTable module
 function Model:createLookupTable(m)
    return nn.LookupTable(m.char_vocab_size, m.inputFrameSize)
+end
+
+function Model:createTanh(m)
+   return nn.Tanh()
 end
 
 
@@ -210,6 +218,10 @@ end
 -- Create a new threshold
 function Model:newThreshold()
    return nn.Threshold()
+end
+
+function Model:newTanh()
+   return nn.Tanh()
 end
 
 -- Convert to a new max pooling
