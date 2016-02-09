@@ -130,9 +130,11 @@ function Train:batchStep_lookup()
    -- Get a batch of data
    self.batch_untyped,self.labels_untyped = self.data:getBatch(self.batch_untyped,self.labels_untyped)
    -- Make the data to correct type
-   self.batch = self.batch or self.batch_untyped:type(self.model:type())
+
+   self.batch_lookuped = nn.LookupTable(self.batch_untyped:size(1), 69):forward(self.batch_untyped)
+   self.batch = self.batch or self.batch_lookuped:type(self.model:type())
    self.labels = self.labels or self.labels_untyped:type(self.model:type())
-   self.batch:copy(self.batch_untyped)
+   self.batch:copy(self.batch_lookuped)
    self.labels:copy(self.labels_untyped)
    -- Record time
    if self.model:type() == "torch.CudaTensor" then cutorch.synchronize() end

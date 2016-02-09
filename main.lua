@@ -16,8 +16,7 @@ require("test")
 require('lfs')
 
 -- Configurations
---dofile("config.lua")
-dofile("config_lookup.lua")
+dofile("config.lua")
 
 -- Prepare random number generator
 math.randomseed(os.time())
