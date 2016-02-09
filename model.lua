@@ -136,6 +136,8 @@ function Model:createModule(m)
       return Model:createDropout(m)
    elseif m.module == "nn.LogSoftMax" then
       return Model:createLogSoftMax(m)
+   elseif m.module == "nn.LookupTable" then
+      return Model:createLookupTable(m)
    else
       error("Unrecognized module for creation: "..tostring(m.module))
    end
@@ -157,9 +159,16 @@ function Model:makeCleanModule(m)
       return Model:newLogSoftMax(m)
    elseif torch.typename(m) == "nn.Dropout" then
       return Model:toDropout(m)
+   elseif torch.typename(m) == "nn.LookupTable" then
+      return Model:toLookupTable(m)
    else
       error("Module unrecognized")
    end
+end
+
+-- Create new LookupTable module
+function Model:createLookupTable(m)
+   return nn.LookupTable(m.char_vocab_size, m.inputFrameSize)
 end
 
 
@@ -236,5 +245,12 @@ function Model:toTemporalConvolution(m)
    local new = nn.TemporalConvolution(m.inputFrameSize, m.outputFrameSize, m.kW, m.dW)
    new.weight:copy(m.weight)
    new.bias:copy(m.bias)
+   return new
+end
+
+-- Create a new LogSoftMax
+function Model:toLookupTable(m)
+   local new = nn.LookupTable(m.weight:size(1), m.weight:size(2))
+   new.weight:copy(m.weight)
    return new
 end

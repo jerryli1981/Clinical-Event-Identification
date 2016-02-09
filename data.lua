@@ -57,7 +57,8 @@ end
 function Data:getBatch(inputs, labels, data, extra)
    local data = data or self.data
    local extra = extra or self.extra
-   local inputs = inputs or torch.Tensor(self.batch_size, #self.alphabet, self.length)
+   --local inputs = inputs or torch.Tensor(self.batch_size, #self.alphabet, self.length)
+   local inputs = inputs or torch.Tensor(self.batch_size, self.length)
    local labels = labels or torch.Tensor(inputs:size(1))
 
    for i = 1, inputs:size(1) do
@@ -104,7 +105,8 @@ function Data:getBatch(inputs, labels, data, extra)
 	 end
       end
       -- Quantize the string
-      self:stringToTensor(s, self.length, inputs:select(1, i))
+      --self:stringToTensor(s, self.length, inputs:select(1, i))
+      self:stringToCharIdx(s, self.length, inputs:select(1, i))
    end
 
    return inputs, labels
@@ -125,7 +127,8 @@ function Data:iterator(static, data)
    return function()
       if data.index[i] == nil then return end
 
-      local inputs = inputs or torch.Tensor(self.batch_size, #self.alphabet, self.length)
+      --local inputs = inputs or torch.Tensor(self.batch_size, #self.alphabet, self.length)
+      local inputs = inputs or torch.Tensor(self.batch_size, self.length)
       local labels = labels or torch.Tensor(inputs:size(1))
 
       local n = 0
@@ -143,7 +146,8 @@ function Data:iterator(static, data)
 	 for l = data.index[i][j]:size(1) - 1, 1, -1 do
 	    s = s.." "..ffi.string(torch.data(data.content:narrow(1, data.index[i][j][l], 1)))
 	 end
-	 local data = self:stringToTensor(s, self.length, inputs:select(1, k))
+	 --local data = self:stringToTensor(s, self.length, inputs:select(1, k))
+      local data = self:stringToCharIdx(s, self.length, inputs:select(1, k))
 	 labels[k] = i
       end
 
@@ -162,6 +166,28 @@ function Data:stringToTensor(str, l, input, p)
       end
    end
    return t
+end
+
+
+function Data:stringToCharIdx(s, l, input)
+  
+  s = s:gsub("%s+", "")
+  --trim
+  s = s:gsub("^%s*(.-)%s*$", "%1")
+
+  local s = s:lower()
+  --local output = torch.Tensor(l):fill(#self.alphabet+1)
+  local t = input or torch.Tensor(l)
+  t:fill(#self.alphabet+1)
+  for i = #s, math.max(#s - self.length + 1, 1), -1 do
+    c = s:sub(i,i)
+    if self.dict[c] then
+      t[#s-i+1] = self.dict[c]
+    else
+      t[#s-i+1] = #self.alphabet+1
+    end
+  end
+  return t
 end
 
 return Data
