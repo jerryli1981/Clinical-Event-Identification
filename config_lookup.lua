@@ -39,30 +39,30 @@ activation = "nn.Tanh"
 config.model = {}
 -- #alphabet x 1014
 config.model[1] = {module = "nn.LookupTable", char_vocab_size= #alphabet+1, inputFrameSize = 256}
-config.model[2] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 5}
+config.model[2] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[3] = {module = activation}
-config.model[4] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 2}
+config.model[4] = {module = "nn.TemporalMaxPooling", kW = 1, dW = 1}
 -- 336 x 256
-config.model[5] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 5}
+config.model[5] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[6] = {module = activation}
-config.model[7] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 2}
+config.model[7] = {module = "nn.TemporalMaxPooling", kW = 1, dW = 1}
 -- 110 x 256
-config.model[8] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 3}
+config.model[8] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[9] = {module = activation}
 -- 108 x 256
-config.model[10] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 3}
+config.model[10] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[11] = {module = activation}
 -- 106 x 256
-config.model[12] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 3}
+config.model[12] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[13] = {module = activation}
 -- 104 x 256
-config.model[14] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 3}
+config.model[14] = {module = "nn.TemporalConvolution", inputFrameSize = 256, outputFrameSize = 256, kW = 8}
 config.model[15] = {module = activation}
-config.model[16] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 2}
+config.model[16] = {module = "nn.TemporalMaxPooling", kW = 1, dW = 1}
 -- 34 x 256
-config.model[17] = {module = "nn.Reshape", size = 256*6}
+config.model[17] = {module = "nn.Reshape", size = 256*58}
 -- 8704
-config.model[18] = {module = "nn.Linear", inputSize = 256*6, outputSize = 256}
+config.model[18] = {module = "nn.Linear", inputSize = 256*58, outputSize = 256}
 config.model[19] = {module = activation}
 config.model[20] = {module = "nn.Dropout", p = 0.5}
 -- 1024
@@ -93,7 +93,7 @@ config.main = {}
 config.main.eras = 1
 config.main.epoches = 5000
 config.main.randomize = 5e-2
-config.main.dropout = true
+config.main.dropout = false
 config.main.save = paths.cwd() .. "/models"
 config.main.collectgarbage = 100
 config.main.logtime = 5
