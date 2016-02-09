@@ -32,11 +32,11 @@ if __name__ == '__main__':
     ann_dir_dev = os.path.join(ann_dir, "Dev")
     ann_dir_test = os.path.join(ann_dir, "Test")
 
-    window_size = 5
-
     input_name = args.input
 
     if input_name != None:
+
+        window_size = 3
 
         preprocess_data_torch(text_dir_train, ann_dir_train, data_dir, window_size, input_name, "train", True)
         preprocess_data_torch(text_dir_dev, ann_dir_dev, data_dir, window_size, input_name, "dev", True)
@@ -54,6 +54,7 @@ if __name__ == '__main__':
     make_dirs([data_dir_train, data_dir_dev, data_dir_test])
 
     num_feats=3
+    window_size = 5
 
     print "Process traing data"
     preprocess_data_lasagne(ann_dir_train, text_dir_train, data_dir_train, window_size, num_feats, True)

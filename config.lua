@@ -57,17 +57,17 @@ config.model[13] = {module = "nn.TemporalConvolution", inputFrameSize = 256, out
 config.model[14] = {module = "nn.Threshold"}
 config.model[15] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 3}
 -- 34 x 256
-config.model[16] = {module = "nn.Reshape", size = 256*4}
+config.model[16] = {module = "nn.Reshape", size = 1024}
 -- 8704
-config.model[17] = {module = "nn.Linear", inputSize = 256*4, outputSize = 128}
+config.model[17] = {module = "nn.Linear", inputSize = 1024, outputSize = 256}
 config.model[18] = {module = "nn.Threshold"}
 config.model[19] = {module = "nn.Dropout", p = 0.5}
 -- 1024
-config.model[20] = {module = "nn.Linear", inputSize = 128, outputSize = 128}
+config.model[20] = {module = "nn.Linear", inputSize = 256, outputSize = 256}
 config.model[21] = {module = "nn.Threshold"}
 config.model[22] = {module = "nn.Dropout", p = 0.5}
 -- 1024
-config.model[23] = {module = "nn.Linear", inputSize = 128, outputSize = 4}
+config.model[23] = {module = "nn.Linear", inputSize = 256, outputSize = 4}
 config.model[24] = {module = "nn.LogSoftMax"}
 
 -- The loss
@@ -88,7 +88,7 @@ config.test.confusion = true
 -- Main program
 config.main = {}
 config.main.eras = 1
-config.main.epoches = 5000
+config.main.epoches = 2
 config.main.randomize = 5e-2
 config.main.dropout = true
 config.main.save = paths.cwd() .. "/models"
