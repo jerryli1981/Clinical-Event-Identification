@@ -120,7 +120,8 @@ function Data:iterator(static, data)
    if static == nil then static = true end
 
    if static then
-      inputs = torch.Tensor(self.batch_size, #self.alphabet, self.length)
+      --inputs = torch.Tensor(self.batch_size, #self.alphabet, self.length)
+      inputs = torch.Tensor(self.batch_size, self.length)
       labels = torch.Tensor(inputs:size(1))
    end
 
@@ -147,7 +148,7 @@ function Data:iterator(static, data)
 	    s = s.." "..ffi.string(torch.data(data.content:narrow(1, data.index[i][j][l], 1)))
 	 end
 	 --local data = self:stringToTensor(s, self.length, inputs:select(1, k))
-      local data = self:stringToCharIdx(s, self.length, inputs:select(1, k))
+   local data = self:stringToCharIdx(s, self.length, inputs:select(1, k))
 	 labels[k] = i
       end
 
