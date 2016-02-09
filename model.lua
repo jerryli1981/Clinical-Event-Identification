@@ -22,7 +22,10 @@ end
 
 -- Get the parameters of the model
 function Model:getParameters()
-   return self.sequential:getParameters()
+
+   mm=self.sequential:clone('weight','bias')
+   mm:remove(1)
+   return mm:getParameters()
 end
 
 -- Forward propagation
