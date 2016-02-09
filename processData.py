@@ -46,7 +46,7 @@ if __name__ == '__main__':
         os.system("th csv2t7b.lua -input "+"./data/"+input_name+"_dev.csv -output "+"./data/"+input_name+"_dev.t7b")
         os.system("th csv2t7b.lua -input "+"./data/"+input_name+"_test.csv -output "+"./data/"+input_name+"_test.t7b")
 
-
+    """
     data_dir_train = os.path.join(data_dir, 'train')
     data_dir_dev = os.path.join(data_dir, 'dev')
     data_dir_test = os.path.join(data_dir, 'test')
@@ -71,6 +71,7 @@ if __name__ == '__main__':
         lowercase=False)
 
     build_word2Vector(os.path.join('../NLP-Tools', 'glove.840B.300d.txt'), data_dir, 'vocab-cased.txt')
+    """
 
     print "done"
 
