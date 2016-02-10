@@ -539,7 +539,14 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
                         negative_span_label_map={}
                         for span in all_spans:
                             if span not in positive_span_label_map:
-                                negative_span_label_map[span] = "4"
+                                if input_name == "type":
+                                    negative_span_label_map[span] = "4"
+                                elif input_name == "polarity":
+                                    negative_span_label_map[span] = "3"
+                                elif input_name == "degree":
+                                    negative_span_label_map[span] = "4"
+                                elif input_name == "modality":
+                                    negative_span_label_map[span] = "5"
 
                         merged_spans = positive_span_label_map.keys() + negative_span_label_map.keys()
 
