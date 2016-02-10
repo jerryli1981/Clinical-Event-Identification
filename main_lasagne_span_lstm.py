@@ -55,9 +55,16 @@ def event_span_classifier(args, input_var, input_mask_var, target_var, wordEmbed
     lstm = LSTMLayer(emb, num_units=args.lstmDim, mask_input=input_mask, grad_clipping=GRAD_CLIP,
         nonlinearity=tanh)
 
-    slice = SliceLayer(lstm, indices=-1, axis=1) # out_shape (None, args.lstmDim)
+    lstm_back = LSTMLayer(
+        emb, num_units=args.lstmDim, mask_input=input_mask, grad_clipping=GRAD_CLIP,
+        nonlinearity=tanh, backwards=True)
 
-    hid = DenseLayer(slice, num_units=args.hiddenDim, nonlinearity=sigmoid)
+    slice_forward = SliceLayer(lstm, indices=-1, axis=1) # out_shape (None, args.lstmDim)
+    slice_backward = SliceLayer(lstm_back, indices=0, axis=1) # out_shape (None, args.lstmDim)
+
+    concat = ConcatLayer([slice_forward, slice_backward])
+
+    hid = DenseLayer(concat, num_units=args.hiddenDim, nonlinearity=sigmoid)
 
     network = DenseLayer(hid, num_units=2, nonlinearity=softmax)
 
@@ -151,7 +158,7 @@ if __name__ == '__main__':
     target_var = T.fmatrix('targets')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings.astype(np.float32)
+    wordEmbeddings = wordEmbeddings.astype(np.float32)[:2, :]
 
     if args.mode == "train":
 
