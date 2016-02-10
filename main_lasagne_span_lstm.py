@@ -158,7 +158,7 @@ if __name__ == '__main__':
     target_var = T.fmatrix('targets')
 
     wordEmbeddings = loadWord2VecMap(os.path.join(data_dir, 'word2vec.bin'))
-    wordEmbeddings = wordEmbeddings.astype(np.float32)[:2, :]
+    wordEmbeddings = wordEmbeddings.astype(np.float32)
 
     if args.mode == "train":
 
