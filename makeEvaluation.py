@@ -29,6 +29,21 @@ if __name__ == '__main__':
         for l in f:
             predict_type.append(int(l.strip()))
 
+    predict_degree = []
+    with open(os.path.join(base_dir, 'degree_decisions.txt') )as f:
+        for l in f:
+            predict_degree.append(int(l.strip()))
+
+    predict_polarity = []
+    with open(os.path.join(base_dir, 'polarity_decisions.txt') )as f:
+        for l in f:
+            predict_polarity.append(int(l.strip()))
+
+    predict_modality = []
+    with open(os.path.join(base_dir, 'modality_decisions.txt') )as f:
+        for l in f:
+            predict_modality.append(int(l.strip()))
+
 
     labelidx = 0
     
@@ -102,6 +117,9 @@ if __name__ == '__main__':
                         for span in merged_spans:
                             span_label = predict_span[labelidx]
                             type_label = predict_type[labelidx]
+                            degree_label = predict_degree[labelidx]
+                            polarity_label = predict_polarity[labelidx]
+                            modality_label = predict_modality[labelidx]
                             labelidx += 1
                             if span_label == 1:
                                 f.write("\t<entity>\n")
@@ -121,9 +139,33 @@ if __name__ == '__main__':
                                 else:
                                     f.write("\t\t\t<Type>"+"N/A"+"</Type>\n")
 
-                                f.write("\t\t\t<Degree>N/A</Degree>\n")
-                                f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
-                                f.write("\t\t\t<ContextualModality>ACTUAL</ContextualModality>\n")
+                                if degree_label == 1:
+                                    f.write("\t\t\t<Degree>"+"N/A"+"</Degree>\n")
+                                elif degree_label == 2:
+                                    f.write("\t\t\t<Degree>"+"MOST"+"</Degree>\n")
+                                elif degree_label == 3:
+                                    f.write("\t\t\t<Degree>"+"LITTLE"+"</Degree>\n")
+                                else:
+                                    f.write("\t\t\t<Degree>"+"N/A"+"</Degree>\n")
+
+                                if polarity_label == 1:
+                                    f.write("\t\t\t<Polarity>"+"POS"+"</Polarity>\n")
+                                elif polarity_label == 2:
+                                    f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+                                else:
+                                    f.write("\t\t\t<Polarity>"+"NEG"+"</Polarity>\n")
+
+                                if modality_label == 1:
+                                    f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
+                                elif modality_label == 2:
+                                    f.write("\t\t\t<ContextualModality>"+"HYPOTHETICAL"+"</ContextualModality>\n")
+                                elif modality_label == 3:
+                                    f.write("\t\t\t<ContextualModality>"+"HEDGED"+"</ContextualModality>\n")
+                                elif modality_label == 4:
+                                    f.write("\t\t\t<ContextualModality>"+"GENERIC"+"</ContextualModality>\n")
+                                else:
+                                    f.write("\t\t\t<ContextualModality>"+"ACTUAL"+"</ContextualModality>\n")
+
                                 f.write("\t\t\t<ContextualAspect>N/A</ContextualAspect>\n")
                                 f.write("\t\t\t<Permanence>UNDETERMINED</Permanence>\n")
                                 f.write("\t\t</properties>\n")
