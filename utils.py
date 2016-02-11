@@ -481,6 +481,7 @@ def preprocess_data_lasagne(input_ann_dir, input_text_dir, outDir, window_size=3
 def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, input_name, input_type, Shuffle):
 
     maxchar = 0
+    num_doc = 0
 
     with open(os.path.join(outDir, input_name+"_"+input_type+".csv"), 'w') as csvf:
 
@@ -499,6 +500,8 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
 
                         if "Temporal" not in xml_name:
                             continue
+
+                        num_doc += 1
 
                         #print fn
                         xml_path = os.path.join(input_ann_dir, text_name, xml_name)
@@ -574,3 +577,4 @@ def preprocess_data_torch(input_text_dir, input_ann_dir, outDir, window_size, in
             pbar.finish()
 
     print "max char is: " + str(maxchar)
+    print "num_doc is: " +str(num_doc)
