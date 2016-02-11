@@ -184,7 +184,12 @@ function main.show(figure_error, figure_loss)
    print("val_error is")
    print(val_error)
 
-   --Do the plot
+   print("val_loss is")
+   print(val_loss)
+
+
+   --Do the plot on server will fail
+   --[[
    gnuplot.figure(figure_error)
    gnuplot.plot({"Validate", epoch, val_error})
    gnuplot.title("Validating error")
@@ -193,6 +198,7 @@ function main.show(figure_error, figure_loss)
    gnuplot.plot({"Validate", epoch, val_loss})
    gnuplot.title("Validating loss")
    gnuplot.plotflush()
+   --]]
 
 end
 
