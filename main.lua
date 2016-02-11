@@ -6,7 +6,6 @@ By Xiang Zhang @ New York University
 -- Necessary functionalities
 require("nn")
 
-
 -- Local requires
 require("data")
 require("model")
@@ -17,7 +16,6 @@ require("gnuplot")
 require('lfs')
 
 -- Configurations
-dofile("config.lua")
 
 -- Prepare random number generator
 math.randomseed(os.time())
@@ -27,9 +25,105 @@ torch.manualSeed(os.time())
 main = {}
 
 -- The main program
-function main.main()
+function main.main_type()
 
+   dofile("config_type.lua")
 
+   opt = main.argparse()
+   -- Setting the device
+   if opt.device > 0 then
+      require("cutorch")
+      require("cunn")
+      cutorch.setDevice(opt.device)
+      print("Device set to ".. opt.device)
+      config.main.type = "torch.CudaTensor"
+   else
+      config.main.type = "torch.DoubleTensor"
+   end
+
+   if opt.debug > 0 then
+      dbg = require("debugger")
+   end
+
+   main.clock = {}
+   main.clock.log = 0
+
+   if opt.test > 0 then
+      main.test()
+   else
+      main.new()
+      main.run()
+   end
+ 
+end
+
+function main.main_degree()
+
+   dofile("config_degree.lua")
+
+   opt = main.argparse()
+   -- Setting the device
+   if opt.device > 0 then
+      require("cutorch")
+      require("cunn")
+      cutorch.setDevice(opt.device)
+      print("Device set to ".. opt.device)
+      config.main.type = "torch.CudaTensor"
+   else
+      config.main.type = "torch.DoubleTensor"
+   end
+
+   if opt.debug > 0 then
+      dbg = require("debugger")
+   end
+
+   main.clock = {}
+   main.clock.log = 0
+
+   if opt.test > 0 then
+      main.test()
+   else
+      main.new()
+      main.run()
+   end
+ 
+end
+
+function main.main_polarity()
+
+   dofile("config_polarity.lua")
+
+   opt = main.argparse()
+   -- Setting the device
+   if opt.device > 0 then
+      require("cutorch")
+      require("cunn")
+      cutorch.setDevice(opt.device)
+      print("Device set to ".. opt.device)
+      config.main.type = "torch.CudaTensor"
+   else
+      config.main.type = "torch.DoubleTensor"
+   end
+
+   if opt.debug > 0 then
+      dbg = require("debugger")
+   end
+
+   main.clock = {}
+   main.clock.log = 0
+
+   if opt.test > 0 then
+      main.test()
+   else
+      main.new()
+      main.run()
+   end
+ 
+end
+
+function main.main_modality()
+
+   dofile("config_modality.lua")
 
    opt = main.argparse()
    -- Setting the device
@@ -270,7 +364,7 @@ function main.trainlog(train)
 	    ", err: "..string.format("%.2e",train.error)..
 	    ", obj: "..string.format("%.2e",train.objective)
 
-      print(msg)
+      --print(msg)
    
       main.clock.log = os.time()
    end
@@ -282,11 +376,13 @@ function main.testlog(test)
       collectgarbage()
    end
    if (os.time() - main.clock.log) >= (config.main.logtime or 1) then
+      --[[
       print("n: "..test.n..
 	       ", e: "..string.format("%.2e",test.e)..
 	       ", l: "..string.format("%.2e",test.l)..
 	       ", err: "..string.format("%.2e",test.err)..
 	       ", obj: "..string.format("%.2e",test.objective))
+      --]]
       main.clock.log = os.time()
    end
 end
@@ -304,4 +400,11 @@ function main.findFiles(pattern)
 end
 
 -- Execute the main program
-main.main()
+print("Run Type")
+main.main_type()
+print("Run Degree")
+main.main_degree()
+print("Run Polarity")
+main.main_polarity()
+print("Run Modality")
+main.main_modality()
