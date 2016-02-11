@@ -29,6 +29,8 @@ main = {}
 -- The main program
 function main.main()
 
+
+
    opt = main.argparse()
    -- Setting the device
    if opt.device > 0 then
@@ -47,7 +49,6 @@ function main.main()
 
    main.clock = {}
    main.clock.log = 0
-   
 
    if opt.test > 0 then
       main.test()
@@ -93,8 +94,8 @@ function main.argparse()
       print("Next training epoch resumed to "..config.train.epoch)
       -- Don't do randomize
       if config.main.randomize then
-    config.main.randomize = nil
-    print("Disabled randomization for resumption")
+         config.main.randomize = nil
+         print("Disabled randomization for resumption")
       end
    end
 
@@ -165,7 +166,7 @@ function main.run()
    end
 end
 
-function main.show()
+function main.show(figure_error, figure_loss)
    main.figure_error = main.figure_error or gnuplot.figure()
    main.figure_loss = main.figure_loss or gnuplot.figure()
 
@@ -179,6 +180,7 @@ function main.show()
       val_error[i] = main.record[i].val_error
       val_loss[i] = main.record[i].val_loss
    end
+
    print("val_error is")
    print(val_error)
 
@@ -242,8 +244,6 @@ function main.save()
 
    main.eps_error = main.eps_error or gnuplot.epsfigure(paths.concat(config.main.save,"figure_error.eps"))
    main.eps_loss = main.eps_loss or gnuplot.epsfigure(paths.concat(config.main.save,"figure_loss.eps"))
-   torch.save(main.eps_error)
-   torch.save(main.eps_loss)
    main.show(main.eps_error, main.eps_loss)
 
    collectgarbage()
