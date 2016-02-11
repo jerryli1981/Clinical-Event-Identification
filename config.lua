@@ -89,8 +89,8 @@ config.test.confusion = true
 
 -- Main program
 config.main = {}
-config.main.eras = 1
-config.main.epoches = 5000
+config.main.eras = 10
+config.main.epoches = 100
 config.main.randomize = 5e-2
 config.main.dropout = true
 config.main.save = paths.cwd() .. "/models_" ..att_name

@@ -12,6 +12,7 @@ require("data")
 require("model")
 require("train")
 require("test")
+require("gnuplot")
 
 require('lfs')
 
@@ -155,13 +156,42 @@ function main.run()
 	     main.test_val:run(main.testlog)
       end
 
-      acc_score = 1 - main.test_val.e
-      print("Validate accuracy is: " .. string.format("%.2e",acc_score))
-      if acc_score > best_acc_score then
-         main.save()
-      end
+      print("Recording on ear " .. i)
+      main.record[#main.record + 1] = {val_error = main.test_val.e, val_loss = main.test_val.l}
+      print("Visualizing loss")
+      main.show()
+      main.save()
       collectgarbage()
    end
+end
+
+function main.show()
+   main.figure_error = main.figure_error or gnuplot.figure()
+   main.figure_loss = main.figure_loss or gnuplot.figure()
+
+   local figure_error = figure_error or main.figure_error
+   local figure_loss = figure_loss or main.figure_loss
+
+   local epoch = torch.linspace(1, #main.record, #main.record):mul(config.main.epoches)
+   local val_error = torch.zeros(#main.record)
+   local val_loss = torch.zeros(#main.record)
+   for i = 1, #main.record do
+      val_error[i] = main.record[i].val_error
+      val_loss[i] = main.record[i].val_loss
+   end
+   print("val_error is")
+   print(val_error)
+
+   --Do the plot
+   gnuplot.figure(figure_error)
+   gnuplot.plot({"Validate", epoch, val_error})
+   gnuplot.title("Validating error")
+   gnuplot.plotflush()
+   gnuplot.figure(figure_loss)
+   gnuplot.plot({"Validate", epoch, val_loss})
+   gnuplot.title("Validating loss")
+   gnuplot.plotflush()
+
 end
 
 function main.test()
@@ -209,6 +239,12 @@ function main.save()
          {config = config, record = main.record, momentum = main.train.old_grads:double()})
    torch.save(paths.concat(config.main.save,"sequential_"..(main.train.epoch-1).."_"..time..".t7b"),
          main.model:clearSequential(main.model:makeCleanSequential(main.model.sequential)))
+
+   main.eps_error = main.eps_error or gnuplot.epsfigure(paths.concat(config.main.save,"figure_error.eps"))
+   main.eps_loss = main.eps_loss or gnuplot.epsfigure(paths.concat(config.main.save,"figure_loss.eps"))
+   torch.save(main.eps_error)
+   torch.save(main.eps_loss)
+   main.show(main.eps_error, main.eps_loss)
 
    collectgarbage()
 end
