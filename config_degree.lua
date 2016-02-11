@@ -10,7 +10,7 @@ config = {}
 
 local alphabet = "abcdefghijklmnopqrstuvwxyz0123456789-,;.!?:'\"/\\|_@#$%^&*~`+-=<>()[]{}"
 
-seq_length = 100
+seq_length = 70
 att_name = "degree"
 att_num_label = 4
 
@@ -59,9 +59,9 @@ config.model[13] = {module = "nn.TemporalConvolution", inputFrameSize = 256, out
 config.model[14] = {module = "nn.Threshold"}
 config.model[15] = {module = "nn.TemporalMaxPooling", kW = 3, dW = 3}
 -- 34 x 256
-config.model[16] = {module = "nn.Reshape", size = 256*4}
+config.model[16] = {module = "nn.Reshape", size = 256*2}
 -- 8704
-config.model[17] = {module = "nn.Linear", inputSize = 256*4, outputSize = 256}
+config.model[17] = {module = "nn.Linear", inputSize = 256*2, outputSize = 256}
 config.model[18] = {module = "nn.Threshold"}
 config.model[19] = {module = "nn.Dropout", p = 0.5}
 -- 1024
