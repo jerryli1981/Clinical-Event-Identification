@@ -28,27 +28,6 @@ echo "run span"
 python -u main_lasagne_span_Char.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
                   			--minibatch $minibatch  --mode $mode
 
-elif [ "$3" == "dr" ]
-then
-echo "run dr"
-
-python -u main_lasagne_dr.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
-                  			--minibatch $minibatch  --mode $mode
-
-elif [ "$3" == "modality" ]
-then
-echo "run modality"
-
-python -u main_lasagne_modality.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
-                  			--minibatch $minibatch  --mode $mode
-
-elif [ "$3" == "combine" ]
-then
-echo "run together"
-
-python -u main_lasagne_combine.py --step $step --optimizer $optimizer --hiddenDim $hiddenDim --epochs $epochs \
-                  			--minibatch $minibatch  --mode $mode
-
 fi
 
 

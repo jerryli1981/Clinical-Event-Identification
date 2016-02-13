@@ -183,7 +183,7 @@ if __name__ == '__main__':
 
         train_fn, val_fn, network = event_dr_classifier(args, input_var, target_var, wordEmbeddings, seqlen, num_feats)
 
-        print("Starting training modality model...")
+        print("Starting training DocTimeRel model...")
         best_val_acc = 0
 
         maxlen_train = 0
