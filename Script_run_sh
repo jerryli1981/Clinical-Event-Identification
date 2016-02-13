@@ -1,0 +1,4 @@
+var=`date "+%Y-%m-%d_%H-%M-%S"`
+
+nohup th main.lua -device 0  > logs/output_${var}  &
+
